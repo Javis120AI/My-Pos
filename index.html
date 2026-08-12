@@ -654,64 +654,7 @@
 
 </div>
 
-
-  <div class="expense-form">
-
-    <div class="form-group">
-
-      <label>Expected Cash</label>
-
-      <input
-        id="expectedCash"
-        type="number"
-        readonly
-      >
-
-    </div>
-
-
-    <div class="form-group">
-
-      <label>Actual Cash</label>
-
-      <input
-        id="actualCash"
-        type="number"
-        step="0.01"
-        min="0"
-        placeholder="Count your cash and enter here"
-        oninput="calculateDifference()"
-      >
-
-    </div>
-
-
-    <div class="summary-row">
-
-      <span>Cash Difference</span>
-
-      <strong id="cashDifference">
-        RM0.00
-      </strong>
-
-    </div>
-
-
-    <button
-      id="closeDayBtn"
-      class="save-btn"
-      onclick="saveClosing()">
-
-      Close Day
-
-    </button>
-
-    <div
-      id="closingStatus"
-      class="status">
-    </div>
-
-  </div>
+</div>
 
 </div>
 
