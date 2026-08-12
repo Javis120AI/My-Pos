@@ -4221,10 +4221,9 @@ if (savedUser) {
       status.innerText =
         "❌ Staff ID already exists.";
     } else {
-      status.innerText =
-        "❌ Cannot create staff.";
-    }
-
+  status.innerText =
+    "❌ " + error.message;
+}
   } finally {
 
     button.disabled = false;
