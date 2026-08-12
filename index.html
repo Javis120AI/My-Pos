@@ -4201,7 +4201,7 @@ if (savedUser) {
     status.innerText =
       "✅ Staff created successfully.";
 
-    loadStaff();
+    loadStaff(ownerPin);
 
 
   } catch (error) {
@@ -4233,8 +4233,7 @@ if (savedUser) {
 
   }
 
-  }
-  async function loadStaff() {
+  async function loadStaff(ownerPin = null) {
   const staffList = document.getElementById("staffList");
 
   if (!currentUser || currentUser.role !== "owner") {
@@ -4242,7 +4241,15 @@ if (savedUser) {
     return;
   }
 
-  const ownerPin = prompt("Enter Owner PIN to load staff accounts:");
+  if (!ownerPin) {
+  ownerPin = prompt("Enter Owner PIN to load staff accounts:");
+}
+
+if (!ownerPin) {
+  staffList.innerHTML =
+    '<div class="empty">Owner verification required.</div>';
+  return;
+  }
 
   if (!ownerPin) {
     staffList.innerHTML =
@@ -4303,11 +4310,26 @@ if (savedUser) {
         </div>
 
         <div style="margin-top:5px;">
-          Status:
-          <strong>
-            ${user.is_active ? "✅ Active" : "⛔ Disabled"}
-          </strong>
-        </div>
+  Status:
+  <strong>
+    ${user.is_active ? "✅ Active" : "⛔ Disabled"}
+  </strong>
+</div>
+
+<button
+  onclick="toggleStaff(${user.id}, ${!user.is_active})"
+  style="
+    margin-top:12px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+  "
+>
+  ${user.is_active ? "Disable Staff" : "Enable Staff"}
+</button>
 
       </div>
     `).join("");
@@ -4323,6 +4345,64 @@ if (savedUser) {
 
   }
 }
+  async function toggleStaff(staffUserId, newActive) {
+  if (!currentUser || currentUser.role !== "owner") {
+    alert("Owner only.");
+    return;
+  }
+
+  const ownerPin = prompt("Enter Owner PIN:");
+
+  if (ownerPin === null) return;
+
+  if (!/^\d{4}$/.test(ownerPin)) {
+    alert("Owner PIN must be 4 digits.");
+    return;
+  }
+
+  const action = newActive ? "enable" : "disable";
+
+  if (!confirm(`Are you sure you want to ${action} this staff account?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/rpc/owner_toggle_staff",
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_owner_id: currentUser.id,
+          p_owner_pin: ownerPin,
+          p_staff_user_id: staffUserId,
+          p_active: newActive
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText);
+    }
+
+    alert(
+      newActive
+        ? "✅ Staff account enabled."
+        : "✅ Staff account disabled."
+    );
+
+    loadStaff(ownerPin);
+
+  } catch (error) {
+    console.error(error);
+    alert("❌ " + error.message);
+  }
+  }
 </script>
   
 <script>
