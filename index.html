@@ -6,10 +6,15 @@
   <title>My POS</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       background: #f4f4f4;
+      color: #222;
     }
 
     header {
@@ -25,6 +30,8 @@
       display: flex;
       background: white;
       border-bottom: 1px solid #ddd;
+      position: sticky;
+      top: 0;
     }
 
     .tabs button {
@@ -35,38 +42,118 @@
       font-size: 15px;
     }
 
-    .tabs button:hover {
-      background: #eee;
+    .tabs button.active {
+      background: #111;
+      color: white;
     }
 
     .content {
-      padding: 20px;
+      padding: 18px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
     }
 
     .product {
       background: white;
       padding: 20px;
-      margin-bottom: 12px;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 20px;
       cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .product:active {
+      transform: scale(0.98);
+      border-color: #111;
+    }
+
+    .cart {
+      margin-top: 25px;
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .qty-controls button {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      font-size: 20px;
+    }
+
+    .qty-controls span {
+      display: inline-block;
+      min-width: 30px;
+      text-align: center;
+      font-weight: bold;
     }
 
     .total {
-      margin-top: 30px;
-      font-size: 28px;
+      margin-top: 20px;
+      font-size: 30px;
       font-weight: bold;
+    }
+
+    .payment-methods {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .payment-methods button {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      background: white;
+      font-size: 18px;
+    }
+
+    .payment-methods button.selected {
+      border-color: #111;
+      background: #111;
+      color: white;
     }
 
     .pay {
       width: 100%;
       padding: 20px;
-      margin-top: 15px;
+      margin-top: 18px;
       border: none;
       border-radius: 10px;
       font-size: 20px;
       background: #111;
       color: white;
+    }
+
+    .empty {
+      color: #888;
+    }
+
+    @media (max-width: 700px) {
+      .products {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs button {
+        font-size: 12px;
+        padding: 14px 3px;
+      }
     }
   </style>
 </head>
@@ -78,7 +165,7 @@
 </header>
 
 <div class="tabs">
-  <button>🍔 Order</button>
+  <button class="active">🍔 Order</button>
   <button>📋 Today</button>
   <button>💰 Expenses</button>
   <button>🧾 Closing</button>
@@ -89,33 +176,159 @@
 
   <h2>New Order</h2>
 
-  <div class="product">
-    Chicken Burger
-    <br>
-    RM5.00
+  <div class="products">
+    <div class="product" onclick="addItem('Chicken Burger', 5)">
+      Chicken Burger
+      <br>
+      <strong>RM5.00</strong>
+    </div>
+
+    <div class="product" onclick="addItem('Beef Burger', 6)">
+      Beef Burger
+      <br>
+      <strong>RM6.00</strong>
+    </div>
+
+    <div class="product" onclick="addItem('Lamb Burger', 7)">
+      Lamb Burger
+      <br>
+      <strong>RM7.00</strong>
+    </div>
   </div>
 
-  <div class="product">
-    Beef Burger
-    <br>
-    RM6.00
-  </div>
+  <div class="cart">
+    <h2>Current Order</h2>
 
-  <div class="product">
-    Lamb Burger
-    <br>
-    RM7.00
-  </div>
+    <div id="cartItems">
+      <div class="empty">No items yet</div>
+    </div>
 
-  <div class="total">
-    Total: RM0.00
-  </div>
+    <div class="total">
+      Total: RM<span id="total">0.00</span>
+    </div>
 
-  <button class="pay">
-    Confirm Order
-  </button>
+    <div class="payment-methods">
+      <button onclick="selectPayment('Cash', this)">Cash</button>
+      <button onclick="selectPayment('DuitNow QR', this)">DuitNow QR</button>
+    </div>
+
+    <button class="pay" onclick="confirmOrder()">
+      Confirm Order
+    </button>
+  </div>
 
 </div>
 
+<script>
+  let cart = {};
+  let paymentMethod = "";
+
+  function addItem(name, price) {
+    if (!cart[name]) {
+      cart[name] = {
+        name: name,
+        price: price,
+        qty: 1
+      };
+    } else {
+      cart[name].qty++;
+    }
+
+    renderCart();
+  }
+
+  function changeQty(name, change) {
+    cart[name].qty += change;
+
+    if (cart[name].qty <= 0) {
+      delete cart[name];
+    }
+
+    renderCart();
+  }
+
+  function renderCart() {
+    const cartItems = document.getElementById("cartItems");
+    const totalElement = document.getElementById("total");
+
+    const items = Object.values(cart);
+
+    if (items.length === 0) {
+      cartItems.innerHTML = '<div class="empty">No items yet</div>';
+      totalElement.innerText = "0.00";
+      return;
+    }
+
+    let html = "";
+    let total = 0;
+
+    items.forEach(item => {
+      const itemTotal = item.price * item.qty;
+      total += itemTotal;
+
+      html += `
+        <div class="cart-item">
+          <div>
+            <strong>${item.name}</strong><br>
+            RM${item.price.toFixed(2)} × ${item.qty}
+          </div>
+
+          <div class="qty-controls">
+            <button onclick="changeQty('${item.name}', -1)">−</button>
+            <span>${item.qty}</span>
+            <button onclick="changeQty('${item.name}', 1)">+</button>
+          </div>
+        </div>
+      `;
+    });
+
+    cartItems.innerHTML = html;
+    totalElement.innerText = total.toFixed(2);
+  }
+
+  function selectPayment(method, button) {
+    paymentMethod = method;
+
+    document.querySelectorAll(".payment-methods button").forEach(btn => {
+      btn.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+  }
+
+  function confirmOrder() {
+    const items = Object.values(cart);
+
+    if (items.length === 0) {
+      alert("Please add items first.");
+      return;
+    }
+
+    if (!paymentMethod) {
+      alert("Please select payment method.");
+      return;
+    }
+
+    const total = document.getElementById("total").innerText;
+
+    alert(
+      "Order Confirmed!\\n" +
+      "Total: RM" + total + "\\n" +
+      "Payment: " + paymentMethod
+    );
+
+    cart = {};
+    paymentMethod = "";
+
+    document.querySelectorAll(".payment-methods button").forEach(btn => {
+      btn.classList.remove("selected");
+    });
+
+    renderCart();
+  }
+</script>
+
+</body>
+</html>
 </body>
 </html>
