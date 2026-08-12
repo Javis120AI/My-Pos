@@ -406,24 +406,9 @@
 
     <h2>New Order</h2>
 
-    <div class="products">
-
-      <div class="product" onclick="addItem('Chicken Burger', 5)">
-        Chicken Burger<br>
-        <strong>RM5.00</strong>
-      </div>
-
-      <div class="product" onclick="addItem('Beef Burger', 6)">
-        Beef Burger<br>
-        <strong>RM6.00</strong>
-      </div>
-
-      <div class="product" onclick="addItem('Lamb Burger', 7)">
-        Lamb Burger<br>
-        <strong>RM7.00</strong>
-      </div>
-
-    </div>
+<div id="productList" class="products">
+  <div class="loading">Loading products...</div>
+</div>
 
     <div class="cart">
 
@@ -796,6 +781,10 @@ function showPage(page) {
 
   if (page === "report") {
   loadReport();
+  }
+
+  if (page === "order") {
+  loadProducts();
   }
 }
 
@@ -3205,6 +3194,85 @@ async function loadReport(period = "today") {
   }
 
 }
+  async function loadProducts() {
+
+  const container =
+    document.getElementById("productList");
+
+  container.innerHTML =
+    '<div class="loading">Loading products...</div>';
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/products" +
+        "?select=*" +
+        "&is_active=eq.true" +
+        "&order=sort_order.asc,id.asc",
+        {
+          headers: {
+            apikey: SUPABASE_KEY
+          }
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        await response.text()
+      );
+    }
+
+    const products =
+      await response.json();
+
+    if (products.length === 0) {
+
+      container.innerHTML =
+        '<div class="empty">No active products.</div>';
+
+      return;
+    }
+
+    let html = "";
+
+    products.forEach(product => {
+
+      html += `
+        <div
+          class="product"
+          onclick="addItem(
+            '${product.name.replace(/'/g, "\\'")}',
+            ${Number(product.price)}
+          )">
+
+          ${product.name}<br>
+
+          <strong>
+            RM${Number(product.price).toFixed(2)}
+          </strong>
+
+        </div>
+      `;
+
+    });
+
+    container.innerHTML = html;
+
+  } catch (error) {
+
+    console.error(error);
+
+    container.innerHTML =
+      "❌ Cannot load products.";
+
+  }
+    
+  }
+  
+  loadProducts();
+  
 </script>
 
 </body>
