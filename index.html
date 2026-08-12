@@ -522,10 +522,73 @@
   <button id="tab-report" onclick="showPage('report')">
   📊 Report
 </button>
+  
+  <button id="tab-staff" onclick="showPage('staff')">
+  👥 Staff
+  </button>
+  
 </div>
 
 <div class="content">
+<!-- STAFF MANAGEMENT -->
+<div id="page-staff" class="page">
 
+  <h2>👥 Staff Management</h2>
+
+  <div class="expense-form">
+
+    <div class="form-group">
+      <label>Staff Name</label>
+      <input
+        id="newStaffName"
+        type="text"
+        placeholder="Example: Ah Ming">
+    </div>
+
+    <div class="form-group">
+      <label>Staff ID</label>
+      <input
+        id="newStaffId"
+        type="text"
+        placeholder="Example: AM001">
+    </div>
+
+    <div class="form-group">
+      <label>4 Digit PIN</label>
+      <input
+        id="newStaffPin"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+        pattern="[0-9]*"
+        placeholder="••••">
+    </div>
+
+    <button
+      id="createStaffBtn"
+      class="save-btn"
+      onclick="createStaff()">
+      Create Staff
+    </button>
+
+    <div
+      id="staffStatus"
+      class="status">
+    </div>
+
+  </div>
+
+  <h2 style="margin-top:25px;">
+    Staff Accounts
+  </h2>
+
+  <div id="staffList">
+    <div class="loading">
+      Loading...
+    </div>
+  </div>
+
+</div>
   <!-- ORDER -->
   <div id="page-order" class="page active">
 
@@ -921,6 +984,10 @@ function showPage(page) {
 
   if (page === "order") {
   loadProducts();
+  }
+
+  if (page === "staff") {
+  loadStaff();
   }
 }
 
@@ -3791,6 +3858,139 @@ async function loginUser() {
   }
 
   }
+  async function createStaff() {
+
+  if (!currentUser || currentUser.role !== "owner") {
+    alert("Owner only.");
+    return;
+  }
+
+  const name =
+    document.getElementById("newStaffName").value.trim();
+
+  const staffId =
+    document.getElementById("newStaffId").value.trim();
+
+  const staffPin =
+    document.getElementById("newStaffPin").value.trim();
+
+  const status =
+    document.getElementById("staffStatus");
+
+  const button =
+    document.getElementById("createStaffBtn");
+
+
+  if (!name || !staffId || !staffPin) {
+    status.innerText = "Please fill in all fields.";
+    return;
+  }
+
+  if (!/^\d{4}$/.test(staffPin)) {
+    status.innerText = "PIN must be exactly 4 digits.";
+    return;
+  }
+
+
+  // Owner 再验证一次自己的 PIN
+  const ownerPin =
+    prompt("Enter your Owner 4 Digit PIN");
+
+  if (ownerPin === null) {
+    return;
+  }
+
+  if (!/^\d{4}$/.test(ownerPin)) {
+    status.innerText = "Owner PIN must be 4 digits.";
+    return;
+  }
+
+
+  button.disabled = true;
+  button.innerText = "Creating...";
+  status.innerText = "";
+
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/rpc/owner_create_staff",
+        {
+          method: "POST",
+
+          headers: {
+            apikey: SUPABASE_KEY,
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            p_owner_id: currentUser.id,
+            p_owner_pin: ownerPin,
+            p_staff_id: staffId,
+            p_staff_name: name,
+            p_staff_pin: staffPin
+          })
+        }
+      );
+
+
+    if (!response.ok) {
+      throw new Error(
+        await response.text()
+      );
+    }
+
+
+    document.getElementById(
+      "newStaffName"
+    ).value = "";
+
+    document.getElementById(
+      "newStaffId"
+    ).value = "";
+
+    document.getElementById(
+      "newStaffPin"
+    ).value = "";
+
+
+    status.innerText =
+      "✅ Staff created successfully.";
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    if (
+      error.message.includes(
+        "Owner verification failed"
+      )
+    ) {
+      status.innerText =
+        "❌ Wrong Owner PIN.";
+    } else if (
+      error.message.includes(
+        "Staff ID already exists"
+      )
+    ) {
+      status.innerText =
+        "❌ Staff ID already exists.";
+    } else {
+      status.innerText =
+        "❌ Cannot create staff.";
+    }
+
+  } finally {
+
+    button.disabled = false;
+    button.innerText = "Create Staff";
+
+  }
+
+      }
   function applyUserAccess() {
 
   if (!currentUser) return;
@@ -3825,6 +4025,9 @@ async function loginUser() {
       "tab-report"
     );
 
+  const staffTab =
+  document.getElementById("tab-staff");
+
 
   if (expensesTab) {
     expensesTab.style.display =
@@ -3843,6 +4046,10 @@ async function loginUser() {
       isOwner ? "" : "none";
   }
 
+  if (staffTab) {
+  staffTab.style.display =
+    isOwner ? "" : "none";
+  }
 
   showPage("order");
 
@@ -3894,6 +4101,129 @@ if (savedUser) {
   }
 
 }
+  async function createStaff() {
+  if (!currentUser || currentUser.role !== "owner") {
+    alert("Owner only.");
+    return;
+  }
+
+  const name = document.getElementById("newStaffName").value.trim();
+  const staffId = document.getElementById("newStaffId").value.trim();
+  const pin = document.getElementById("newStaffPin").value.trim();
+  const status = document.getElementById("staffStatus");
+
+  if (!name || !staffId || !pin) {
+    status.innerText = "Please fill in all fields.";
+    return;
+  }
+
+  if (!/^\d{4}$/.test(pin)) {
+    status.innerText = "PIN must be exactly 4 digits.";
+    return;
+  }
+
+  status.innerText = "Creating...";
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/staff",
+      {
+        method: "POST",
+
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json",
+          Prefer: "return=representation"
+        },
+
+        body: JSON.stringify({
+          staff_id: staffId,
+          name: name,
+          pin: pin,
+          role: "staff",
+          active: true
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText);
+    }
+
+    document.getElementById("newStaffName").value = "";
+    document.getElementById("newStaffId").value = "";
+    document.getElementById("newStaffPin").value = "";
+
+    status.innerText = "✅ Staff created successfully.";
+
+    loadStaff();
+
+  } catch (error) {
+    console.error(error);
+    status.innerText = "❌ Failed to create staff.";
+  }
+  }
+  async function loadStaff() {
+  const staffList = document.getElementById("staffList");
+
+  if (!currentUser || currentUser.role !== "owner") {
+    staffList.innerHTML = "";
+    return;
+  }
+
+  staffList.innerHTML = "Loading...";
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL +
+      "/rest/v1/staff?role=eq.staff&order=name.asc",
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const staff = await response.json();
+
+    if (staff.length === 0) {
+      staffList.innerHTML =
+        '<div class="empty">No staff accounts yet.</div>';
+      return;
+    }
+
+    staffList.innerHTML = staff.map(user => `
+      <div style="
+        background:white;
+        padding:18px;
+        margin-bottom:10px;
+        border-radius:12px;
+      ">
+        <strong>${user.name}</strong>
+
+        <div style="margin-top:6px;color:#666;">
+          ID: ${user.staff_id}
+        </div>
+
+        <div style="margin-top:4px;color:#666;">
+          Status: ${user.active ? "Active" : "Disabled"}
+        </div>
+      </div>
+    `).join("");
+
+  } catch (error) {
+    console.error(error);
+    staffList.innerHTML =
+      '<div class="status">❌ Failed to load staff.</div>';
+  }
+  }
 </script>
   
 <script>
