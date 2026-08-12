@@ -334,7 +334,9 @@
   <button id="tab-closing" onclick="showPage('closing')">
   🧾 Closing
   </button>
-  <button>📊 Report</button>
+  <button id="tab-report" onclick="showPage('report')">
+  📊 Report
+</button>
 </div>
 
 <div class="content">
@@ -657,7 +659,24 @@
 </div>
 
 </div>
+  
+<!-- REPORT -->
+<div id="page-report" class="page">
 
+  <h2>📊 Report</h2>
+
+  <div class="summary">
+    <div class="summary-main">
+      Report Ready
+    </div>
+
+    <div>
+      Today / Week / Month reports will appear here.
+    </div>
+  </div>
+
+</div>
+  
 <script>
 
 const SUPABASE_URL =
@@ -693,8 +712,13 @@ function showPage(page) {
   if (page === "expenses") {
     loadExpenses();
   }
+  
   if (page === "closing") {
   loadClosing();
+  }
+
+  if (page === "report") {
+  loadReport();
   }
 }
 
@@ -2544,6 +2568,9 @@ async function loadMonthlyClosing() {
   }
 
 }
+  function loadReport() {
+  console.log("Report page opened");
+  }
 </script>
 
 </body>
