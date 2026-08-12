@@ -640,4 +640,202 @@ async function loadToday() {
 
     const ordersURL =
       SUPABASE_URL +
-      "/rest
+      "/rest/v1/orders" +
+      "?select=*" +
+      "&created_at=gte." +
+      encodeURIComponent(start.toISOString()) +
+      "&created_at=lt." +
+      encodeURIComponent(end.toISOString()) +
+      "&order=created_at.desc";
+
+    const ordersResponse =
+      await fetch(ordersURL, {
+        headers: {
+          apikey: SUPABASE_KEY
+        }
+      });
+
+    if (!ordersResponse.ok) {
+      throw new Error(
+        await ordersResponse.text()
+      );
+    }
+
+    const orders =
+      await ordersResponse.json();
+
+    if (orders.length === 0) {
+
+      container.innerHTML =
+        '<div class="summary">' +
+        '<div class="summary-main">RM0.00</div>' +
+        '<div>No orders today.</div>' +
+        '</div>';
+
+      return;
+    }
+
+    const ids =
+      orders.map(o => o.id).join(",");
+
+    const itemsURL =
+      SUPABASE_URL +
+      "/rest/v1/order_items" +
+      "?select=*" +
+      "&order_id=in.(" +
+      ids +
+      ")";
+
+    const itemsResponse =
+      await fetch(itemsURL, {
+        headers: {
+          apikey: SUPABASE_KEY
+        }
+      });
+
+    if (!itemsResponse.ok) {
+      throw new Error(
+        await itemsResponse.text()
+      );
+    }
+
+    const allItems =
+      await itemsResponse.json();
+
+    let totalSales = 0;
+    let cash = 0;
+    let qr = 0;
+
+    orders.forEach(order => {
+
+      const amount =
+        Number(order.total_amount);
+
+      totalSales += amount;
+
+      if (
+        order.payment_method === "Cash"
+      ) {
+        cash += amount;
+      }
+
+      if (
+        order.payment_method ===
+        "DuitNow QR"
+      ) {
+        qr += amount;
+      }
+
+    });
+
+    let html = `
+
+      <div class="summary">
+
+        <div class="summary-main">
+          RM${totalSales.toFixed(2)}
+        </div>
+
+        <div class="summary-row">
+          <span>Orders</span>
+          <strong>${orders.length}</strong>
+        </div>
+
+        <div class="summary-row">
+          <span>💵 Cash</span>
+          <strong>
+            RM${cash.toFixed(2)}
+          </strong>
+        </div>
+
+        <div class="summary-row">
+          <span>📱 DuitNow QR</span>
+          <strong>
+            RM${qr.toFixed(2)}
+          </strong>
+        </div>
+
+      </div>
+    `;
+
+    orders.forEach(order => {
+
+      const items =
+        allItems.filter(
+          item =>
+            item.order_id === order.id
+        );
+
+      const time =
+        new Date(
+          order.created_at
+        ).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+      let itemText = "";
+
+      items.forEach(item => {
+
+        itemText += `
+          ${item.product_name}
+          × ${item.quantity}
+          — RM${Number(
+            item.item_total
+          ).toFixed(2)}
+          <br>
+        `;
+
+      });
+
+      html += `
+
+        <div class="order-card">
+
+          <div class="order-top">
+
+            <span>
+              Order #${order.id}
+            </span>
+
+            <span>
+              RM${Number(
+                order.total_amount
+              ).toFixed(2)}
+            </span>
+
+          </div>
+
+          <div class="order-items">
+            ${itemText}
+          </div>
+
+          <div class="order-payment">
+            ${order.payment_method}
+            · ${time}
+          </div>
+
+        </div>
+      `;
+
+    });
+
+    container.innerHTML = html;
+
+  } catch (error) {
+
+    console.error(error);
+
+    container.innerHTML =
+      "❌ Cannot load today's orders.";
+
+  }
+}
+
+</script>
+
+</body>
+</html>
+</body>
+</html>
