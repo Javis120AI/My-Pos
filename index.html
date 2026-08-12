@@ -489,7 +489,28 @@
 
 </div>
   <div id="posApp" style="display:none;">
-<header>JTPOS</header>
+<header style="
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+">
+
+  <span>JTPOS</span>
+
+  <button
+    onclick="logoutUser()"
+    style="
+      border:none;
+      background:white;
+      color:#f58220;
+      padding:8px 14px;
+      border-radius:8px;
+      font-weight:bold;
+    ">
+    Logout
+  </button>
+
+</header>
 
 <div class="tabs">
   <button id="tab-order" class="active" onclick="showPage('order')">🍔 Order</button>
@@ -3660,7 +3681,219 @@ function filterProducts(category, button) {
   renderCart();
 
   }
-  
+  let currentUser = null;
+
+async function loginUser() {
+
+  const staffId =
+    document.getElementById("loginStaffId")
+      .value
+      .trim();
+
+  const pin =
+    document.getElementById("loginPin")
+      .value
+      .trim();
+
+  const status =
+    document.getElementById("loginStatus");
+
+  const button =
+    document.getElementById("loginBtn");
+
+
+  if (!staffId) {
+    status.innerText = "Please enter Staff ID.";
+    return;
+  }
+
+  if (!/^\d{4}$/.test(pin)) {
+    status.innerText = "PIN must be 4 digits.";
+    return;
+  }
+
+
+  button.disabled = true;
+  button.innerText = "Signing in...";
+  status.innerText = "";
+
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/rpc/login_staff",
+        {
+          method: "POST",
+
+          headers: {
+            apikey: SUPABASE_KEY,
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            p_staff_id: staffId,
+            p_pin: pin
+          })
+        }
+      );
+
+
+    if (!response.ok) {
+      throw new Error(
+        await response.text()
+      );
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (!data || data.length === 0) {
+
+      status.innerText =
+        "❌ Invalid Staff ID or PIN.";
+
+      return;
+    }
+
+
+    currentUser = {
+      id: data[0].user_id,
+      staffId: data[0].staff_id,
+      name: data[0].staff_name,
+      role: data[0].user_role
+    };
+
+
+    sessionStorage.setItem(
+      "jtpos_user",
+      JSON.stringify(currentUser)
+    );
+
+
+    applyUserAccess();
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.innerText =
+      "❌ Login failed.";
+
+  } finally {
+
+    button.disabled = false;
+    button.innerText = "Login";
+
+  }
+
+  }
+  function applyUserAccess() {
+
+  if (!currentUser) return;
+
+
+  document.getElementById(
+    "loginPage"
+  ).style.display = "none";
+
+
+  document.getElementById(
+    "posApp"
+  ).style.display = "block";
+
+
+  const isOwner =
+    currentUser.role === "owner";
+
+
+  const expensesTab =
+    document.getElementById(
+      "tab-expenses"
+    );
+
+  const closingTab =
+    document.getElementById(
+      "tab-closing"
+    );
+
+  const reportTab =
+    document.getElementById(
+      "tab-report"
+    );
+
+
+  if (expensesTab) {
+    expensesTab.style.display =
+      isOwner ? "" : "none";
+  }
+
+
+  if (closingTab) {
+    closingTab.style.display =
+      isOwner ? "" : "none";
+  }
+
+
+  if (reportTab) {
+    reportTab.style.display =
+      isOwner ? "" : "none";
+  }
+
+
+  showPage("order");
+
+  }
+  function logoutUser() {
+
+  currentUser = null;
+
+  sessionStorage.removeItem(
+    "jtpos_user"
+  );
+
+
+  document.getElementById(
+    "posApp"
+  ).style.display = "none";
+
+
+  document.getElementById(
+    "loginPage"
+  ).style.display = "flex";
+
+
+  document.getElementById(
+    "loginPin"
+  ).value = "";
+
+  }
+  const savedUser =
+  sessionStorage.getItem(
+    "jtpos_user"
+  );
+
+if (savedUser) {
+
+  try {
+
+    currentUser =
+      JSON.parse(savedUser);
+
+    applyUserAccess();
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      "jtpos_user"
+    );
+
+  }
+
+}
 </script>
   
 <script>
