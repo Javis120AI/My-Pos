@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My POS</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f4f4;
+    }
+
+    header {
+      background: #111;
+      color: white;
+      padding: 18px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .tabs button {
+      flex: 1;
+      padding: 16px 5px;
+      border: none;
+      background: white;
+      font-size: 15px;
+    }
+
+    .tabs button:hover {
+      background: #eee;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .product {
+      background: white;
+      padding: 20px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .total {
+      margin-top: 30px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .pay {
+      width: 100%;
+      padding: 20px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 20px;
+      background: #111;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  MY POS
+</header>
+
+<div class="tabs">
+  <button>🍔 Order</button>
+  <button>📋 Today</button>
+  <button>💰 Expenses</button>
+  <button>🧾 Closing</button>
+  <button>📊 Report</button>
+</div>
+
+<div class="content">
+
+  <h2>New Order</h2>
+
+  <div class="product">
+    Chicken Burger
+    <br>
+    RM5.00
+  </div>
+
+  <div class="product">
+    Beef Burger
+    <br>
+    RM6.00
+  </div>
+
+  <div class="product">
+    Lamb Burger
+    <br>
+    RM7.00
+  </div>
+
+  <div class="total">
+    Total: RM0.00
+  </div>
+
+  <button class="pay">
+    Confirm Order
+  </button>
+
+</div>
+
+</body>
+</html>
