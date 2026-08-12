@@ -52,13 +52,8 @@
       margin: auto;
     }
 
-    .page {
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
+    .page { display: none; }
+    .page.active { display: block; }
 
     .products {
       display: grid;
@@ -66,10 +61,18 @@
       gap: 12px;
     }
 
-    .product {
+    .product,
+    .cart,
+    .summary,
+    .order-card,
+    .expense-form,
+    .expense-card {
       background: white;
-      padding: 20px;
       border-radius: 12px;
+    }
+
+    .product {
+      padding: 20px;
       font-size: 20px;
       cursor: pointer;
       border: 2px solid transparent;
@@ -82,20 +85,23 @@
 
     .cart,
     .summary,
-    .order-card {
-      background: white;
+    .order-card,
+    .expense-form,
+    .expense-card {
       padding: 18px;
-      border-radius: 12px;
     }
 
-    .cart {
-      margin-top: 25px;
-    }
+    .cart { margin-top: 25px; }
 
-    .cart-item {
+    .cart-item,
+    .summary-row,
+    .expense-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .cart-item {
       padding: 12px 0;
       border-bottom: 1px solid #eee;
     }
@@ -115,11 +121,13 @@
       font-weight: bold;
     }
 
-    .total {
-      margin-top: 20px;
+    .total,
+    .summary-main {
       font-size: 30px;
       font-weight: bold;
     }
+
+    .total { margin-top: 20px; }
 
     .payment-methods {
       display: flex;
@@ -142,9 +150,10 @@
       color: white;
     }
 
-    .pay {
+    .pay,
+    .save-btn {
       width: 100%;
-      padding: 20px;
+      padding: 18px;
       margin-top: 18px;
       border: none;
       border-radius: 10px;
@@ -153,7 +162,8 @@
       color: white;
     }
 
-    .pay:disabled {
+    .pay:disabled,
+    .save-btn:disabled {
       opacity: 0.5;
     }
 
@@ -166,24 +176,18 @@
       margin-bottom: 18px;
     }
 
-    .summary-main {
-      font-size: 30px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
     .summary-row {
-      display: flex;
-      justify-content: space-between;
       padding: 7px 0;
       font-size: 18px;
     }
 
-    .order-card {
+    .order-card,
+    .expense-card {
       margin-bottom: 12px;
     }
 
-    .order-top {
+    .order-top,
+    .expense-top {
       display: flex;
       justify-content: space-between;
       gap: 15px;
@@ -191,25 +195,55 @@
       font-size: 18px;
     }
 
-    .order-items {
+    .order-items,
+    .expense-note {
       margin-top: 12px;
       color: #555;
       line-height: 1.7;
     }
 
-    .order-payment {
+    .order-payment,
+    .expense-time {
       margin-top: 12px;
       font-weight: bold;
     }
 
-    .empty {
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 18px;
+      background: white;
+    }
+
+    .delete-btn {
+      border: none;
+      background: #eee;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .empty,
+    .loading {
       color: #888;
     }
 
     .loading {
       text-align: center;
       padding: 30px;
-      color: #777;
     }
 
     @media (max-width: 700px) {
@@ -230,13 +264,9 @@
 <header>MY POS</header>
 
 <div class="tabs">
-  <button id="tab-order" class="active"
-    onclick="showPage('order')">🍔 Order</button>
-
-  <button id="tab-today"
-    onclick="showPage('today')">📋 Today</button>
-
-  <button>💰 Expenses</button>
+  <button id="tab-order" class="active" onclick="showPage('order')">🍔 Order</button>
+  <button id="tab-today" onclick="showPage('today')">📋 Today</button>
+  <button id="tab-expenses" onclick="showPage('expenses')">💰 Expenses</button>
   <button>🧾 Closing</button>
   <button>📊 Report</button>
 </div>
@@ -250,20 +280,17 @@
 
     <div class="products">
 
-      <div class="product"
-        onclick="addItem('Chicken Burger', 5)">
+      <div class="product" onclick="addItem('Chicken Burger', 5)">
         Chicken Burger<br>
         <strong>RM5.00</strong>
       </div>
 
-      <div class="product"
-        onclick="addItem('Beef Burger', 6)">
+      <div class="product" onclick="addItem('Beef Burger', 6)">
         Beef Burger<br>
         <strong>RM6.00</strong>
       </div>
 
-      <div class="product"
-        onclick="addItem('Lamb Burger', 7)">
+      <div class="product" onclick="addItem('Lamb Burger', 7)">
         Lamb Burger<br>
         <strong>RM7.00</strong>
       </div>
@@ -294,9 +321,7 @@
 
       </div>
 
-      <button id="confirmBtn"
-        class="pay"
-        onclick="confirmOrder()">
+      <button id="confirmBtn" class="pay" onclick="confirmOrder()">
         Confirm Order
       </button>
 
@@ -318,6 +343,64 @@
 
   </div>
 
+
+  <!-- EXPENSES -->
+  <div id="page-expenses" class="page">
+
+    <h2>Expenses</h2>
+
+    <div class="expense-form">
+
+      <div class="form-group">
+        <label>Category</label>
+
+        <select id="expenseCategory">
+          <option value="Ingredients">Ingredients</option>
+          <option value="Packaging">Packaging</option>
+          <option value="Drinks">Drinks</option>
+          <option value="Transport">Transport</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+
+        <input
+          id="expenseDescription"
+          type="text"
+          placeholder="Example: Chicken stock"
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Amount (RM)</label>
+
+        <input
+          id="expenseAmount"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+        >
+      </div>
+
+      <button id="saveExpenseBtn" class="save-btn" onclick="saveExpense()">
+        Save Expense
+      </button>
+
+      <div id="expenseStatus" class="status"></div>
+
+    </div>
+
+    <h2 style="margin-top:25px;">Today's Expenses</h2>
+
+    <div id="expenseContent">
+      <div class="loading">Loading...</div>
+    </div>
+
+  </div>
+
 </div>
 
 
@@ -333,7 +416,7 @@ let cart = {};
 let paymentMethod = "";
 
 
-/* TAB */
+/* TABS */
 
 function showPage(page) {
 
@@ -352,6 +435,10 @@ function showPage(page) {
   if (page === "today") {
     loadToday();
   }
+
+  if (page === "expenses") {
+    loadExpenses();
+  }
 }
 
 
@@ -360,17 +447,13 @@ function showPage(page) {
 function addItem(name, price) {
 
   if (!cart[name]) {
-
     cart[name] = {
       name: name,
       price: price,
       qty: 1
     };
-
   } else {
-
     cart[name].qty++;
-
   }
 
   renderCart();
@@ -431,15 +514,13 @@ function renderCart() {
 
         <div class="qty-controls">
 
-          <button
-            onclick="changeQty('${item.name}', -1)">
+          <button onclick="changeQty('${item.name}', -1)">
             −
           </button>
 
           <span>${item.qty}</span>
 
-          <button
-            onclick="changeQty('${item.name}', 1)">
+          <button onclick="changeQty('${item.name}', 1)">
             +
           </button>
 
@@ -450,9 +531,7 @@ function renderCart() {
   });
 
   cartItems.innerHTML = html;
-
-  totalElement.innerText =
-    total.toFixed(2);
+  totalElement.innerText = total.toFixed(2);
 }
 
 
@@ -528,9 +607,7 @@ async function confirmOrder() {
       );
 
     if (!orderResponse.ok) {
-      throw new Error(
-        await orderResponse.text()
-      );
+      throw new Error(await orderResponse.text());
     }
 
     const orderData =
@@ -545,32 +622,26 @@ async function confirmOrder() {
         product_name: item.name,
         price: item.price,
         quantity: item.qty,
-        item_total:
-          item.price * item.qty
+        item_total: item.price * item.qty
       }));
 
     const itemResponse =
       await fetch(
-        SUPABASE_URL +
-        "/rest/v1/order_items",
+        SUPABASE_URL + "/rest/v1/order_items",
         {
           method: "POST",
 
           headers: {
             apikey: SUPABASE_KEY,
-            "Content-Type":
-              "application/json"
+            "Content-Type": "application/json"
           },
 
-          body:
-            JSON.stringify(orderItems)
+          body: JSON.stringify(orderItems)
         }
       );
 
     if (!itemResponse.ok) {
-      throw new Error(
-        await itemResponse.text()
-      );
+      throw new Error(await itemResponse.text());
     }
 
     status.innerText =
@@ -581,9 +652,7 @@ async function confirmOrder() {
     paymentMethod = "";
 
     document
-      .querySelectorAll(
-        ".payment-methods button"
-      )
+      .querySelectorAll(".payment-methods button")
       .forEach(btn =>
         btn.classList.remove("selected")
       );
@@ -602,8 +671,7 @@ async function confirmOrder() {
   } finally {
 
     confirmBtn.disabled = false;
-    confirmBtn.innerText =
-      "Confirm Order";
+    confirmBtn.innerText = "Confirm Order";
   }
 }
 
@@ -656,9 +724,7 @@ async function loadToday() {
       });
 
     if (!ordersResponse.ok) {
-      throw new Error(
-        await ordersResponse.text()
-      );
+      throw new Error(await ordersResponse.text());
     }
 
     const orders =
@@ -694,9 +760,7 @@ async function loadToday() {
       });
 
     if (!itemsResponse.ok) {
-      throw new Error(
-        await itemsResponse.text()
-      );
+      throw new Error(await itemsResponse.text());
     }
 
     const allItems =
@@ -713,19 +777,13 @@ async function loadToday() {
 
       totalSales += amount;
 
-      if (
-        order.payment_method === "Cash"
-      ) {
+      if (order.payment_method === "Cash") {
         cash += amount;
       }
 
-      if (
-        order.payment_method ===
-        "DuitNow QR"
-      ) {
+      if (order.payment_method === "DuitNow QR") {
         qr += amount;
       }
-
     });
 
     let html = `
@@ -743,16 +801,12 @@ async function loadToday() {
 
         <div class="summary-row">
           <span>💵 Cash</span>
-          <strong>
-            RM${cash.toFixed(2)}
-          </strong>
+          <strong>RM${cash.toFixed(2)}</strong>
         </div>
 
         <div class="summary-row">
           <span>📱 DuitNow QR</span>
-          <strong>
-            RM${qr.toFixed(2)}
-          </strong>
+          <strong>RM${qr.toFixed(2)}</strong>
         </div>
 
       </div>
@@ -786,7 +840,6 @@ async function loadToday() {
           ).toFixed(2)}
           <br>
         `;
-
       });
 
       html += `
@@ -818,7 +871,6 @@ async function loadToday() {
 
         </div>
       `;
-
     });
 
     container.innerHTML = html;
@@ -829,7 +881,272 @@ async function loadToday() {
 
     container.innerHTML =
       "❌ Cannot load today's orders.";
+  }
+}
 
+
+/* EXPENSES */
+
+async function saveExpense() {
+
+  const category =
+    document.getElementById("expenseCategory").value;
+
+  const description =
+    document.getElementById("expenseDescription").value.trim();
+
+  const amount =
+    Number(
+      document.getElementById("expenseAmount").value
+    );
+
+  const status =
+    document.getElementById("expenseStatus");
+
+  const button =
+    document.getElementById("saveExpenseBtn");
+
+  if (!amount || amount <= 0) {
+    alert("Please enter a valid amount.");
+    return;
+  }
+
+  button.disabled = true;
+  button.innerText = "Saving...";
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL + "/rest/v1/expenses",
+        {
+          method: "POST",
+
+          headers: {
+            apikey: SUPABASE_KEY,
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            category: category,
+            description: description,
+            amount: amount
+          })
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    status.innerText =
+      "✅ Expense Saved | RM" +
+      amount.toFixed(2);
+
+    document.getElementById("expenseDescription").value = "";
+    document.getElementById("expenseAmount").value = "";
+
+    loadExpenses();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Cannot save expense:\n" +
+      error.message
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.innerText = "Save Expense";
+  }
+}
+
+
+async function loadExpenses() {
+
+  const container =
+    document.getElementById("expenseContent");
+
+  container.innerHTML =
+    '<div class="loading">Loading...</div>';
+
+  try {
+
+    const now = new Date();
+
+    const start =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0, 0, 0
+      );
+
+    const end =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0, 0, 0
+      );
+
+    const url =
+      SUPABASE_URL +
+      "/rest/v1/expenses" +
+      "?select=*" +
+      "&created_at=gte." +
+      encodeURIComponent(start.toISOString()) +
+      "&created_at=lt." +
+      encodeURIComponent(end.toISOString()) +
+      "&order=created_at.desc";
+
+    const response =
+      await fetch(url, {
+        headers: {
+          apikey: SUPABASE_KEY
+        }
+      });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const expenses =
+      await response.json();
+
+    let total = 0;
+
+    expenses.forEach(expense => {
+      total += Number(expense.amount);
+    });
+
+    let html = `
+
+      <div class="summary">
+
+        <div class="summary-main">
+          RM${total.toFixed(2)}
+        </div>
+
+        <div class="summary-row">
+          <span>Expense Records</span>
+          <strong>${expenses.length}</strong>
+        </div>
+
+      </div>
+    `;
+
+    if (expenses.length === 0) {
+
+      html += `
+        <div class="expense-card">
+          No expenses today.
+        </div>
+      `;
+
+    } else {
+
+      expenses.forEach(expense => {
+
+        const time =
+          new Date(
+            expense.created_at
+          ).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+        html += `
+
+          <div class="expense-card">
+
+            <div class="expense-top">
+
+              <span>
+                ${expense.category || "Other"}
+              </span>
+
+              <span>
+                RM${Number(
+                  expense.amount
+                ).toFixed(2)}
+              </span>
+
+            </div>
+
+            <div class="expense-note">
+              ${expense.description || "No description"}
+            </div>
+
+            <div class="expense-row">
+
+              <div class="expense-time">
+                ${time}
+              </div>
+
+              <button
+                class="delete-btn"
+                onclick="deleteExpense(${expense.id})">
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+        `;
+      });
+    }
+
+    container.innerHTML = html;
+    
+  } catch (error) {
+    
+    console.error(error);
+
+    container.innerHTML =
+  "❌ Cannot load expenses.";
+  }
+}
+
+
+async function deleteExpense(id) {
+
+  const confirmed =
+    confirm("Delete this expense?");
+
+  if (!confirmed) return;
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/expenses?id=eq." +
+        id,
+        {
+          method: "DELETE",
+
+          headers: {
+            apikey: SUPABASE_KEY
+          }
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    loadExpenses();
+
+  } catch (error) {
+
+    alert(
+      "Cannot delete expense:\n" +
+      error.message
+    );
   }
 }
 
@@ -837,5 +1154,4 @@ async function loadToday() {
 
 </body>
 </html>
-</body>
-</html>
+    
