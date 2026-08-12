@@ -320,6 +320,66 @@
   margin-top: 8px;
   color: #555;
 }
+    .report-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.report-tabs button {
+  flex: 1;
+  padding: 14px 8px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  font-size: 16px;
+}
+
+.report-tabs button.active {
+  background: #111;
+  color: white;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.report-card {
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+}
+
+.report-label {
+  color: #666;
+  font-size: 15px;
+}
+
+.report-value {
+  font-size: 26px;
+  font-weight: bold;
+  margin-top: 7px;
+}
+
+.top-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 700px) {
+  .report-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .report-tabs button {
+    font-size: 13px;
+  }
+}
   </style>
 </head>
 
@@ -665,14 +725,31 @@
 
   <h2>📊 Report</h2>
 
-  <div class="summary">
-    <div class="summary-main">
-      Report Ready
-    </div>
+  <div class="report-tabs">
 
-    <div>
-      Today / Week / Month reports will appear here.
-    </div>
+    <button
+      id="report-tab-today"
+      class="active"
+      onclick="loadReport('today')">
+      Today
+    </button>
+
+    <button
+      id="report-tab-week"
+      onclick="loadReport('week')">
+      This Week
+    </button>
+
+    <button
+      id="report-tab-month"
+      onclick="loadReport('month')">
+      This Month
+    </button>
+
+  </div>
+
+  <div id="reportContent">
+    <div class="loading">Loading...</div>
   </div>
 
 </div>
@@ -2568,9 +2645,566 @@ async function loadMonthlyClosing() {
   }
 
 }
-  function loadReport() {
-  console.log("Report page opened");
+  /* REPORT */
+
+async function loadReport(period = "today") {
+
+  document
+    .querySelectorAll(".report-tabs button")
+    .forEach(btn =>
+      btn.classList.remove("active")
+    );
+
+  const activeTab =
+    document.getElementById(
+      "report-tab-" + period
+    );
+
+  if (activeTab) {
+    activeTab.classList.add("active");
   }
+
+  const container =
+    document.getElementById(
+      "reportContent"
+    );
+
+  container.innerHTML =
+    '<div class="loading">Loading report...</div>';
+
+  try {
+
+    const now = new Date();
+
+    let start;
+    let end;
+    let title;
+
+
+    /* TODAY */
+
+    if (period === "today") {
+
+      start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0, 0, 0
+      );
+
+      end = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0, 0, 0
+      );
+
+      title = "Today's Report";
+    }
+
+
+    /* WEEK */
+
+    if (period === "week") {
+
+      const day =
+        now.getDay();
+
+      const mondayOffset =
+        day === 0
+          ? -6
+          : 1 - day;
+
+      start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() +
+        mondayOffset,
+        0, 0, 0
+      );
+
+      end = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate() + 7,
+        0, 0, 0
+      );
+
+      title = "This Week";
+    }
+
+
+    /* MONTH */
+
+    if (period === "month") {
+
+      start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+        0, 0, 0
+      );
+
+      end = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        1,
+        0, 0, 0
+      );
+
+      title = "This Month";
+    }
+
+
+    /* LOAD ORDERS */
+
+    const ordersURL =
+      SUPABASE_URL +
+      "/rest/v1/orders" +
+      "?select=*" +
+      "&created_at=gte." +
+      encodeURIComponent(
+        start.toISOString()
+      ) +
+      "&created_at=lt." +
+      encodeURIComponent(
+        end.toISOString()
+      );
+
+
+    const ordersResponse =
+      await fetch(
+        ordersURL,
+        {
+          headers: {
+            apikey:
+              SUPABASE_KEY
+          }
+        }
+      );
+
+
+    if (!ordersResponse.ok) {
+      throw new Error(
+        await ordersResponse.text()
+      );
+    }
+
+
+    const orders =
+      await ordersResponse.json();
+
+
+    /* LOAD EXPENSES */
+
+    const expensesURL =
+      SUPABASE_URL +
+      "/rest/v1/expenses" +
+      "?select=*" +
+      "&created_at=gte." +
+      encodeURIComponent(
+        start.toISOString()
+      ) +
+      "&created_at=lt." +
+      encodeURIComponent(
+        end.toISOString()
+      );
+
+
+    const expensesResponse =
+      await fetch(
+        expensesURL,
+        {
+          headers: {
+            apikey:
+              SUPABASE_KEY
+          }
+        }
+      );
+
+
+    if (!expensesResponse.ok) {
+      throw new Error(
+        await expensesResponse.text()
+      );
+    }
+
+
+    const expenses =
+      await expensesResponse.json();
+
+
+    /* CALCULATE SALES */
+
+    let sales = 0;
+    let cash = 0;
+    let qr = 0;
+
+
+    orders.forEach(order => {
+
+      const amount =
+        Number(
+          order.total_amount
+        );
+
+      sales += amount;
+
+      if (
+        order.payment_method ===
+        "Cash"
+      ) {
+        cash += amount;
+      }
+
+      if (
+        order.payment_method ===
+        "DuitNow QR"
+      ) {
+        qr += amount;
+      }
+
+    });
+
+
+    /* CALCULATE EXPENSES */
+
+    let expenseTotal = 0;
+
+
+    expenses.forEach(expense => {
+
+      expenseTotal +=
+        Number(
+          expense.amount
+        );
+
+    });
+
+
+    const net =
+      sales - expenseTotal;
+
+
+    const average =
+      orders.length > 0
+        ? sales / orders.length
+        : 0;
+
+
+    /* LOAD ORDER ITEMS */
+
+    let allItems = [];
+
+
+    if (orders.length > 0) {
+
+      const ids =
+        orders
+          .map(order => order.id)
+          .join(",");
+
+
+      const itemsURL =
+        SUPABASE_URL +
+        "/rest/v1/order_items" +
+        "?select=*" +
+        "&order_id=in.(" +
+        ids +
+        ")";
+
+
+      const itemsResponse =
+        await fetch(
+          itemsURL,
+          {
+            headers: {
+              apikey:
+                SUPABASE_KEY
+            }
+          }
+        );
+
+
+      if (!itemsResponse.ok) {
+
+        throw new Error(
+          await itemsResponse.text()
+        );
+
+      }
+
+
+      allItems =
+        await itemsResponse.json();
+
+    }
+
+
+    /* TOP SELLING ITEMS */
+
+    const itemStats = {};
+
+
+    allItems.forEach(item => {
+
+      const name =
+        item.product_name;
+
+
+      if (!itemStats[name]) {
+
+        itemStats[name] = {
+          qty: 0,
+          sales: 0
+        };
+
+      }
+
+
+      itemStats[name].qty +=
+        Number(
+          item.quantity
+        );
+
+
+      itemStats[name].sales +=
+        Number(
+          item.item_total
+        );
+
+    });
+
+
+    const topItems =
+      Object.entries(
+        itemStats
+      )
+      .sort(
+        (a, b) =>
+          b[1].qty -
+          a[1].qty
+      );
+
+
+    /* DISPLAY */
+
+    let html = `
+
+      <div class="summary">
+
+        <div class="summary-main">
+          ${title}
+        </div>
+
+      </div>
+
+
+      <div class="report-grid">
+
+        <div class="report-card">
+
+          <div class="report-label">
+            Total Sales
+          </div>
+
+          <div class="report-value">
+            ${formatMoney(sales)}
+          </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+          <div class="report-label">
+            Orders
+          </div>
+
+          <div class="report-value">
+            ${orders.length}
+          </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+          <div class="report-label">
+            Expenses
+          </div>
+
+          <div class="report-value">
+            ${formatMoney(
+              expenseTotal
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+          <div class="report-label">
+            Net Income
+          </div>
+
+          <div class="report-value">
+            ${formatMoney(net)}
+          </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+          <div class="report-label">
+            Average Order
+          </div>
+
+          <div class="report-value">
+            ${formatMoney(
+              average
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+          <div class="report-label">
+            Items Sold
+          </div>
+
+          <div class="report-value">
+
+            ${
+              allItems.reduce(
+                (sum, item) =>
+                  sum +
+                  Number(
+                    item.quantity
+                  ),
+                0
+              )
+            }
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="summary">
+
+        <h3>Payment Methods</h3>
+
+        <div class="summary-row">
+
+          <span>
+            💵 Cash
+          </span>
+
+          <strong>
+            ${formatMoney(cash)}
+          </strong>
+
+        </div>
+
+
+        <div class="summary-row">
+
+          <span>
+            📱 DuitNow QR
+          </span>
+
+          <strong>
+            ${formatMoney(qr)}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div class="summary">
+
+        <h3>🏆 Top Selling Items</h3>
+    `;
+
+
+    if (
+      topItems.length === 0
+    ) {
+
+      html += `
+        <div class="empty">
+          No items sold.
+        </div>
+      `;
+
+    } else {
+
+      topItems.forEach(
+        ([name, data], index) => {
+
+          html += `
+
+            <div class="top-item">
+
+              <div>
+
+                <strong>
+                  ${index + 1}.
+                  ${name}
+                </strong>
+
+                <br>
+
+                <span>
+                  ${data.qty}
+                  sold
+                </span>
+
+              </div>
+
+
+              <strong>
+                ${formatMoney(
+                  data.sales
+                )}
+              </strong>
+
+            </div>
+          `;
+
+        }
+      );
+
+    }
+
+
+    html += `
+      </div>
+    `;
+
+
+    container.innerHTML =
+      html;
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    container.innerHTML =
+      "❌ Cannot load report.";
+
+  }
+
+}
 </script>
 
 </body>
