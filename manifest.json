@@ -1,0 +1,17 @@
+{
+  "name": "JTPOS",
+  "short_name": "JTPOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f58220",
+  "theme_color": "#f58220",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/jtpos-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
