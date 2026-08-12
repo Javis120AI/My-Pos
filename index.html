@@ -4201,6 +4201,8 @@ if (savedUser) {
     status.innerText =
       "✅ Staff created successfully.";
 
+    loadStaff();
+
 
   } catch (error) {
 
@@ -4228,6 +4230,91 @@ if (savedUser) {
 
     button.disabled = false;
     button.innerText = "Create Staff";
+
+  }
+
+  }
+  async function loadStaff() {
+
+  const staffList =
+    document.getElementById("staffList");
+
+  if (!currentUser || currentUser.role !== "owner") {
+    staffList.innerHTML = "";
+    return;
+  }
+
+  staffList.innerHTML =
+    '<div class="loading">Loading...</div>';
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/staff_users" +
+        "?select=id,staff_id,name,role,is_active" +
+        "&role=eq.staff" +
+        "&order=name.asc",
+        {
+          headers: {
+            apikey: SUPABASE_KEY
+          }
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        await response.text()
+      );
+    }
+
+    const staff =
+      await response.json();
+
+    if (staff.length === 0) {
+      staffList.innerHTML =
+        '<div class="empty">No staff accounts yet.</div>';
+      return;
+    }
+
+    staffList.innerHTML =
+      staff.map(user => `
+        <div style="
+          background:white;
+          padding:18px;
+          margin-bottom:10px;
+          border-radius:12px;
+        ">
+
+          <strong>
+            ${user.name}
+          </strong>
+
+          <div style="
+            margin-top:6px;
+            color:#666;
+          ">
+            ID: ${user.staff_id}
+          </div>
+
+          <div style="
+            margin-top:4px;
+            color:#666;
+          ">
+            Status:
+            ${user.is_active ? "Active" : "Disabled"}
+          </div>
+
+        </div>
+      `).join("");
+
+  } catch (error) {
+
+    console.error(error);
+
+    staffList.innerHTML =
+      '<div class="status">❌ Failed to load staff.</div>';
 
   }
 
