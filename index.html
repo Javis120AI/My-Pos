@@ -411,7 +411,84 @@
 </head>
 
 <body>
+<!-- LOGIN PAGE -->
+<div id="loginPage" style="
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f58220;
+  padding:20px;
+">
 
+  <div style="
+    background:white;
+    width:100%;
+    max-width:380px;
+    padding:32px;
+    border-radius:18px;
+    box-shadow:0 10px 35px rgba(0,0,0,0.18);
+  ">
+
+    <div style="
+      text-align:center;
+      font-size:36px;
+      font-weight:bold;
+      margin-bottom:5px;
+    ">
+      JTPOS
+    </div>
+
+    <div style="
+      text-align:center;
+      color:#777;
+      margin-bottom:28px;
+    ">
+      Sign in to continue
+    </div>
+
+    <div class="form-group">
+      <label>Staff ID</label>
+
+      <input
+        id="loginStaffId"
+        type="text"
+        placeholder="Staff ID"
+        autocomplete="username"
+      >
+    </div>
+
+    <div class="form-group">
+      <label>4 Digit PIN</label>
+
+      <input
+        id="loginPin"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+        pattern="[0-9]*"
+        placeholder="••••"
+        autocomplete="current-password"
+      >
+    </div>
+
+    <button
+      id="loginBtn"
+      class="save-btn"
+      onclick="loginUser()">
+      Login
+    </button>
+
+    <div
+      id="loginStatus"
+      class="status"
+      style="text-align:center;">
+    </div>
+
+  </div>
+
+</div>
+  <div id="posApp" style="display:none;">
 <header>JTPOS</header>
 
 <div class="tabs">
@@ -3597,6 +3674,8 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+
+</div>
   
 </body>
 </html>
