@@ -380,6 +380,27 @@
     font-size: 13px;
   }
 }
+    .category-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 15px;
+  padding-bottom: 4px;
+}
+
+.category-tabs button {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  font-size: 15px;
+}
+
+.category-tabs button.active {
+  background: #111;
+  color: white;
+}
   </style>
 </head>
 
@@ -749,7 +770,7 @@ const SUPABASE_KEY =
 
 let cart = {};
 let paymentMethod = "";
-
+let loadedProducts = [];
 
 /* TABS */
 
@@ -3224,41 +3245,10 @@ async function loadReport(period = "today") {
       );
     }
 
-    const products =
+    loadedProducts =
       await response.json();
 
-    if (products.length === 0) {
-
-      container.innerHTML =
-        '<div class="empty">No active products.</div>';
-
-      return;
-    }
-
-    let html = "";
-
-    products.forEach(product => {
-
-      html += `
-        <div
-          class="product"
-          onclick="addItem(
-            '${product.name.replace(/'/g, "\\'")}',
-            ${Number(product.price)}
-          )">
-
-          ${product.name}<br>
-
-          <strong>
-            RM${Number(product.price).toFixed(2)}
-          </strong>
-
-        </div>
-      `;
-
-    });
-
-    container.innerHTML = html;
+    renderProducts(loadedProducts);
 
   } catch (error) {
 
@@ -3268,10 +3258,76 @@ async function loadReport(period = "today") {
       "❌ Cannot load products.";
 
   }
-    
-  }
+}
   
   loadProducts();
+
+  function renderProducts(products) {
+
+  const container =
+    document.getElementById("productList");
+
+  if (products.length === 0) {
+
+    container.innerHTML =
+      '<div class="empty">No products in this category.</div>';
+
+    return;
+  }
+
+  let html = "";
+
+  products.forEach(product => {
+
+    html += `
+      <div
+        class="product"
+        onclick="addItem(
+          '${product.name.replace(/'/g, "\\'")}',
+          ${Number(product.price)}
+        )">
+
+        ${product.name}<br>
+
+        <strong>
+          RM${Number(product.price).toFixed(2)}
+        </strong>
+
+      </div>
+    `;
+
+  });
+
+  container.innerHTML = html;
+}
+
+
+function filterProducts(category, button) {
+
+  document
+    .querySelectorAll(".category-tabs button")
+    .forEach(btn =>
+      btn.classList.remove("active")
+    );
+
+  button.classList.add("active");
+
+  if (category === "All") {
+
+    renderProducts(loadedProducts);
+
+  } else {
+
+    const filtered =
+      loadedProducts.filter(
+        product =>
+          product.category === category
+      );
+
+    renderProducts(filtered);
+
+  }
+}
   
 </script>
 
