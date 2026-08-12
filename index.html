@@ -427,6 +427,17 @@
 
     <h2>New Order</h2>
 
+<div id="categoryTabs" class="category-tabs">
+  <button class="active" onclick="filterProducts('All', this)">All</button>
+  <button onclick="filterProducts('Western Pasta Set', this)">Pasta Set</button>
+  <button onclick="filterProducts('Pasta', this)">Pasta</button>
+  <button onclick="filterProducts('Burger', this)">Burger</button>
+  <button onclick="filterProducts('Quesadilla', this)">Quesadilla</button>
+  <button onclick="filterProducts('Tortilla', this)">Tortilla</button>
+  <button onclick="filterProducts('Snacks', this)">Snacks</button>
+  <button onclick="filterProducts('Add-On', this)">Add-On</button>
+</div>
+
 <div id="productList" class="products">
   <div class="loading">Loading products...</div>
 </div>
