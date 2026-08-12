@@ -6,9 +6,7 @@
   <title>My POS</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: Arial, sans-serif;
@@ -32,6 +30,7 @@
       border-bottom: 1px solid #ddd;
       position: sticky;
       top: 0;
+      z-index: 10;
     }
 
     .tabs button {
@@ -89,8 +88,8 @@
     }
 
     .qty-controls button {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border: none;
       border-radius: 8px;
       font-size: 20px;
@@ -141,6 +140,16 @@
       color: white;
     }
 
+    .pay:disabled {
+      opacity: 0.5;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
     .empty {
       color: #888;
     }
@@ -160,9 +169,7 @@
 
 <body>
 
-<header>
-  MY POS
-</header>
+<header>MY POS</header>
 
 <div class="tabs">
   <button class="active">🍔 Order</button>
@@ -177,26 +184,26 @@
   <h2>New Order</h2>
 
   <div class="products">
+
     <div class="product" onclick="addItem('Chicken Burger', 5)">
-      Chicken Burger
-      <br>
+      Chicken Burger<br>
       <strong>RM5.00</strong>
     </div>
 
     <div class="product" onclick="addItem('Beef Burger', 6)">
-      Beef Burger
-      <br>
+      Beef Burger<br>
       <strong>RM6.00</strong>
     </div>
 
     <div class="product" onclick="addItem('Lamb Burger', 7)">
-      Lamb Burger
-      <br>
+      Lamb Burger<br>
       <strong>RM7.00</strong>
     </div>
+
   </div>
 
   <div class="cart">
+
     <h2>Current Order</h2>
 
     <div id="cartItems">
@@ -208,127 +215,286 @@
     </div>
 
     <div class="payment-methods">
-      <button onclick="selectPayment('Cash', this)">Cash</button>
-      <button onclick="selectPayment('DuitNow QR', this)">DuitNow QR</button>
+      <button onclick="selectPayment('Cash', this)">💵 Cash</button>
+      <button onclick="selectPayment('DuitNow QR', this)">📱 DuitNow QR</button>
     </div>
 
-    <button class="pay" onclick="confirmOrder()">
+    <button id="confirmBtn" class="pay" onclick="confirmOrder()">
       Confirm Order
     </button>
+
+    <div id="status" class="status"></div>
+
   </div>
 
 </div>
 
 <script>
-  let cart = {};
-  let paymentMethod = "";
 
-  function addItem(name, price) {
-    if (!cart[name]) {
-      cart[name] = {
-        name: name,
-        price: price,
-        qty: 1
-      };
-    } else {
-      cart[name].qty++;
-    }
+const SUPABASE_URL =
+  "https://sbcdrowaklgzdwsxdlxo.supabase.co";
 
-    renderCart();
+const SUPABASE_KEY =
+  "sb_publishable_C6bOQc6VROqxVcgfxfcqEQ_fG1k480J";
+
+let cart = {};
+let paymentMethod = "";
+
+function addItem(name, price) {
+
+  if (!cart[name]) {
+    cart[name] = {
+      name: name,
+      price: price,
+      qty: 1
+    };
+  } else {
+    cart[name].qty++;
   }
 
-  function changeQty(name, change) {
-    cart[name].qty += change;
+  renderCart();
+}
 
-    if (cart[name].qty <= 0) {
-      delete cart[name];
-    }
+function changeQty(name, change) {
 
-    renderCart();
+  cart[name].qty += change;
+
+  if (cart[name].qty <= 0) {
+    delete cart[name];
   }
 
-  function renderCart() {
-    const cartItems = document.getElementById("cartItems");
-    const totalElement = document.getElementById("total");
+  renderCart();
+}
 
-    const items = Object.values(cart);
+function renderCart() {
 
-    if (items.length === 0) {
-      cartItems.innerHTML = '<div class="empty">No items yet</div>';
-      totalElement.innerText = "0.00";
-      return;
-    }
+  const cartItems =
+    document.getElementById("cartItems");
 
-    let html = "";
-    let total = 0;
+  const totalElement =
+    document.getElementById("total");
 
-    items.forEach(item => {
-      const itemTotal = item.price * item.qty;
-      total += itemTotal;
+  const items =
+    Object.values(cart);
 
-      html += `
-        <div class="cart-item">
-          <div>
-            <strong>${item.name}</strong><br>
-            RM${item.price.toFixed(2)} × ${item.qty}
-          </div>
+  if (items.length === 0) {
 
-          <div class="qty-controls">
-            <button onclick="changeQty('${item.name}', -1)">−</button>
-            <span>${item.qty}</span>
-            <button onclick="changeQty('${item.name}', 1)">+</button>
-          </div>
+    cartItems.innerHTML =
+      '<div class="empty">No items yet</div>';
+
+    totalElement.innerText =
+      "0.00";
+
+    return;
+  }
+
+  let html = "";
+  let total = 0;
+
+  items.forEach(item => {
+
+    const itemTotal =
+      item.price * item.qty;
+
+    total += itemTotal;
+
+    html += `
+      <div class="cart-item">
+
+        <div>
+          <strong>${item.name}</strong><br>
+          RM${item.price.toFixed(2)}
+          × ${item.qty}
         </div>
-      `;
-    });
 
-    cartItems.innerHTML = html;
-    totalElement.innerText = total.toFixed(2);
-  }
+        <div class="qty-controls">
 
-  function selectPayment(method, button) {
-    paymentMethod = method;
+          <button
+            onclick="changeQty('${item.name}', -1)">
+            −
+          </button>
 
-    document.querySelectorAll(".payment-methods button").forEach(btn => {
+          <span>${item.qty}</span>
+
+          <button
+            onclick="changeQty('${item.name}', 1)">
+            +
+          </button>
+
+        </div>
+
+      </div>
+    `;
+  });
+
+  cartItems.innerHTML = html;
+
+  totalElement.innerText =
+    total.toFixed(2);
+}
+
+function selectPayment(method, button) {
+
+  paymentMethod = method;
+
+  document
+    .querySelectorAll(".payment-methods button")
+    .forEach(btn => {
       btn.classList.remove("selected");
     });
 
-    button.classList.add("selected");
+  button.classList.add("selected");
+}
+
+async function confirmOrder() {
+
+  const items =
+    Object.values(cart);
+
+  if (items.length === 0) {
+    alert("Please add items first.");
+    return;
   }
 
-  function confirmOrder() {
-    const items = Object.values(cart);
+  if (!paymentMethod) {
+    alert("Please select payment method.");
+    return;
+  }
 
-    if (items.length === 0) {
-      alert("Please add items first.");
-      return;
+  const confirmBtn =
+    document.getElementById("confirmBtn");
+
+  const status =
+    document.getElementById("status");
+
+  confirmBtn.disabled = true;
+  confirmBtn.innerText =
+    "Saving...";
+
+  status.innerText = "";
+
+  try {
+
+    const total =
+      items.reduce(
+        (sum, item) =>
+          sum + item.price * item.qty,
+        0
+      );
+
+    const orderNo =
+      "ORD-" + Date.now();
+
+    const orderResponse =
+      await fetch(
+        SUPABASE_URL + "/rest/v1/orders",
+        {
+          method: "POST",
+
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          },
+
+          body: JSON.stringify({
+            order_no: orderNo,
+            total_amount: total,
+            payment_method: paymentMethod,
+            status: "paid"
+          })
+        }
+      );
+
+    if (!orderResponse.ok) {
+      throw new Error(
+        await orderResponse.text()
+      );
     }
 
-    if (!paymentMethod) {
-      alert("Please select payment method.");
-      return;
+    const orderData =
+      await orderResponse.json();
+
+    const orderId =
+      orderData[0].id;
+
+    const orderItems =
+      items.map(item => ({
+        order_id: orderId,
+        product_name: item.name,
+        price: item.price,
+        quantity: item.qty,
+        item_total:
+          item.price * item.qty
+      }));
+
+    const itemResponse =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/order_items",
+        {
+          method: "POST",
+
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(orderItems)
+        }
+      );
+
+    if (!itemResponse.ok) {
+      throw new Error(
+        await itemResponse.text()
+      );
     }
 
-    const total = document.getElementById("total").innerText;
-
-    alert(
-      "Order Confirmed!\\n" +
-      "Total: RM" + total + "\\n" +
-      "Payment: " + paymentMethod
-    );
+    status.innerText =
+      "✅ Order Saved! " +
+      orderNo +
+      " | RM" +
+      total.toFixed(2);
 
     cart = {};
     paymentMethod = "";
 
-    document.querySelectorAll(".payment-methods button").forEach(btn => {
-      btn.classList.remove("selected");
-    });
+    document
+      .querySelectorAll(
+        ".payment-methods button"
+      )
+      .forEach(btn => {
+        btn.classList.remove(
+          "selected"
+        );
+      });
 
     renderCart();
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.innerText =
+      "❌ Save failed. Please try again.";
+
+    alert(
+      "Error saving order:\\n" +
+      error.message
+    );
+
+  } finally {
+
+    confirmBtn.disabled = false;
+
+    confirmBtn.innerText =
+      "Confirm Order";
   }
+}
+
 </script>
 
-</body>
-</html>
 </body>
 </html>
