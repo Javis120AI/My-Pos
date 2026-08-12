@@ -779,7 +779,7 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   "sb_publishable_C6bOQc6VROqxVcgfxfcqEQ_fG1k480J";
 
-let cart = {};
+let cart = [];
 let paymentMethod = "";
 let loadedProducts = [];
 
@@ -825,31 +825,34 @@ function showPage(page) {
 
 function addItem(name, price) {
 
-  if (!cart[name]) {
-    cart[name] = {
-      name: name,
-      price: price,
-      qty: 1
-    };
-  } else {
-    cart[name].qty++;
-  }
+  cart.push({
+    id: Date.now() + Math.random(),
+    name: name,
+    price: price,
+    qty: 1,
+    addons: []
+  });
 
   renderCart();
 }
 
 
-function changeQty(name, change) {
+function changeQty(id, change) {
 
-  cart[name].qty += change;
+  const item =
+    cart.find(item => item.id === id);
 
-  if (cart[name].qty <= 0) {
-    delete cart[name];
+  if (!item) return;
+
+  item.qty += change;
+
+  if (item.qty <= 0) {
+    cart =
+      cart.filter(item => item.id !== id);
   }
 
   renderCart();
 }
-
 
 function renderCart() {
 
@@ -859,10 +862,8 @@ function renderCart() {
   const totalElement =
     document.getElementById("total");
 
-  const items =
-    Object.values(cart);
 
-  if (items.length === 0) {
+  if (cart.length === 0) {
 
     cartItems.innerHTML =
       '<div class="empty">No items yet</div>';
@@ -873,33 +874,120 @@ function renderCart() {
     return;
   }
 
+
   let html = "";
   let total = 0;
 
-  items.forEach(item => {
+
+  cart.forEach(item => {
+
+    const addonTotal =
+      item.addons.reduce(
+        (sum, addon) =>
+          sum + Number(addon.price),
+        0
+      );
+
+
+    const unitTotal =
+      Number(item.price) +
+      addonTotal;
+
 
     const itemTotal =
-      item.price * item.qty;
+      unitTotal * item.qty;
+
 
     total += itemTotal;
+
+
+    let addonHTML = "";
+
+
+    if (item.addons.length > 0) {
+
+  item.addons.forEach((addon, addonIndex) => {
+
+    addonHTML += `
+      <div style="
+        margin-top:6px;
+        color:#666;
+        font-size:15px;
+        display:flex;
+        align-items:center;
+        gap:8px;
+      ">
+
+        <span>
+          + ${addon.name}
+          RM${Number(addon.price).toFixed(2)}
+        </span>
+
+        <button
+          onclick="removeAddon(${item.id}, ${addonIndex})"
+          style="
+            border:none;
+            background:#eee;
+            border-radius:6px;
+            padding:3px 8px;
+            cursor:pointer;
+          ">
+          ✕
+        </button>
+
+      </div>
+    `;
+
+  });
+
+}
+
 
     html += `
       <div class="cart-item">
 
         <div>
-          <strong>${item.name}</strong><br>
-          RM${item.price.toFixed(2)} × ${item.qty}
+
+          <strong>
+            ${item.name}
+          </strong>
+
+          <br>
+
+          RM${Number(item.price).toFixed(2)}
+          × ${item.qty}
+
+          ${addonHTML}
+
+          <br>
+
+          <button
+            style="
+              margin-top:10px;
+              padding:8px 12px;
+              border:none;
+              border-radius:8px;
+            "
+            onclick="openAddons(${item.id})">
+            + Add-On
+          </button>
+
         </div>
+
 
         <div class="qty-controls">
 
-          <button onclick="changeQty('${item.name}', -1)">
+          <button
+            onclick="changeQty(${item.id}, -1)">
             −
           </button>
 
-          <span>${item.qty}</span>
+          <span>
+            ${item.qty}
+          </span>
 
-          <button onclick="changeQty('${item.name}', 1)">
+          <button
+            onclick="changeQty(${item.id}, 1)">
             +
           </button>
 
@@ -907,11 +995,29 @@ function renderCart() {
 
       </div>
     `;
+
   });
 
-  cartItems.innerHTML = html;
-  totalElement.innerText = total.toFixed(2);
+
+  cartItems.innerHTML =
+    html;
+
+
+  totalElement.innerText =
+    total.toFixed(2);
+
 }
+  function removeAddon(itemId, addonIndex) {
+
+  const item =
+    cart.find(item => item.id === itemId);
+
+  if (!item) return;
+
+  item.addons.splice(addonIndex, 1);
+
+  renderCart();
+  }
 
 
 function selectPayment(method, button) {
@@ -930,9 +1036,8 @@ function selectPayment(method, button) {
 
 async function confirmOrder() {
 
-  const items =
-    Object.values(cart);
-
+  const items = cart;
+  
   if (items.length === 0) {
     alert("Please add items first.");
     return;
@@ -955,11 +1060,20 @@ async function confirmOrder() {
   try {
 
     const total =
-      items.reduce(
-        (sum, item) =>
-          sum + item.price * item.qty,
+  items.reduce((sum, item) => {
+
+    const addonTotal =
+      item.addons.reduce(
+        (addonSum, addon) =>
+          addonSum + Number(addon.price),
         0
       );
+
+    return sum +
+      (Number(item.price) + addonTotal) *
+      item.qty;
+
+  }, 0);
 
     const orderNo =
       "ORD-" + Date.now();
@@ -996,13 +1110,40 @@ async function confirmOrder() {
       orderData[0].id;
 
     const orderItems =
-      items.map(item => ({
-        order_id: orderId,
-        product_name: item.name,
-        price: item.price,
-        quantity: item.qty,
-        item_total: item.price * item.qty
-      }));
+  items.map(item => {
+
+    const addonTotal =
+      item.addons.reduce(
+        (sum, addon) =>
+          sum + Number(addon.price),
+        0
+      );
+
+    const addonText =
+      item.addons.length > 0
+        ? " + " +
+          item.addons
+            .map(addon => addon.name)
+            .join(" + ")
+        : "";
+
+    const unitPrice =
+      Number(item.price) +
+      addonTotal;
+
+    return {
+      order_id: orderId,
+      product_name:
+        item.name + addonText,
+      price:
+        unitPrice,
+      quantity:
+        item.qty,
+      item_total:
+        unitPrice * item.qty
+    };
+
+  });
 
     const itemResponse =
       await fetch(
@@ -1027,7 +1168,7 @@ async function confirmOrder() {
       "✅ Order Saved | RM" +
       total.toFixed(2);
 
-    cart = {};
+    cart = [];
     paymentMethod = "";
 
     document
@@ -3339,6 +3480,103 @@ function filterProducts(category, button) {
 
   }
 }
+
+  function openAddons(itemId) {
+
+  const item =
+    cart.find(item => item.id === itemId);
+
+  if (!item) return;
+
+
+  const addons =
+    loadedProducts.filter(
+      product =>
+        product.category === "Add-On"
+    );
+
+
+  if (addons.length === 0) {
+
+    alert("No Add-On available.");
+
+    return;
+  }
+
+
+  let addonList = "Choose Add-On:\n\n";
+
+
+  addons.forEach((addon, index) => {
+
+    addonList +=
+      (index + 1) +
+      ". " +
+      addon.name +
+      " RM" +
+      Number(addon.price).toFixed(2) +
+      "\n";
+
+  });
+
+
+  addonList +=
+    "\nEnter number:";
+
+
+  const choice =
+    prompt(addonList);
+
+
+  if (!choice) return;
+
+
+  const selectedIndex =
+    Number(choice) - 1;
+
+
+  if (
+    selectedIndex < 0 ||
+    selectedIndex >= addons.length
+  ) {
+
+    alert("Invalid selection.");
+
+    return;
+  }
+
+
+  const selectedAddon =
+    addons[selectedIndex];
+
+
+  item.addons.push({
+    id: selectedAddon.id,
+    name: selectedAddon.name,
+    price: Number(selectedAddon.price)
+  });
+
+
+  renderCart();
+
+  }
+  function removeAddon(itemId, addonIndex) {
+
+  const item =
+    cart.find(item => item.id === itemId);
+
+  if (!item) return;
+
+
+  item.addons.splice(
+    addonIndex,
+    1
+  );
+
+
+  renderCart();
+
+  }
   
 </script>
 
