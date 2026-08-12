@@ -4235,12 +4235,18 @@ if (savedUser) {
 
   }
   async function loadStaff() {
-
-  const staffList =
-    document.getElementById("staffList");
+  const staffList = document.getElementById("staffList");
 
   if (!currentUser || currentUser.role !== "owner") {
     staffList.innerHTML = "";
+    return;
+  }
+
+  const ownerPin = prompt("Enter Owner PIN to load staff accounts:");
+
+  if (!ownerPin) {
+    staffList.innerHTML =
+      '<div class="empty">Owner verification required.</div>';
     return;
   }
 
@@ -4249,76 +4255,74 @@ if (savedUser) {
 
   try {
 
-    const response =
-      await fetch(
-        SUPABASE_URL +
-        "/rest/v1/staff_users" +
-        "?select=id,staff_id,name,role,is_active" +
-        "&role=eq.staff" +
-        "&order=name.asc",
-        {
-          headers: {
-            apikey: SUPABASE_KEY
-          }
-        }
-      );
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/rpc/owner_list_staff",
+      {
+        method: "POST",
+
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          p_owner_id: currentUser.id,
+          p_owner_pin: ownerPin
+        })
+      }
+    );
 
     if (!response.ok) {
-      throw new Error(
-        await response.text()
-      );
+      throw new Error(await response.text());
     }
 
-    const staff =
-      await response.json();
+    const staff = await response.json();
 
-    if (staff.length === 0) {
+    if (!staff || staff.length === 0) {
       staffList.innerHTML =
         '<div class="empty">No staff accounts yet.</div>';
       return;
     }
 
-    staffList.innerHTML =
-      staff.map(user => `
-        <div style="
-          background:white;
-          padding:18px;
-          margin-bottom:10px;
-          border-radius:12px;
-        ">
+    staffList.innerHTML = staff.map(user => `
+      <div style="
+        background:white;
+        padding:18px;
+        margin-bottom:10px;
+        border-radius:12px;
+        border:1px solid #ddd;
+      ">
 
-          <strong>
-            ${user.name}
-          </strong>
+        <strong style="font-size:18px;">
+          ${user.name}
+        </strong>
 
-          <div style="
-            margin-top:6px;
-            color:#666;
-          ">
-            ID: ${user.staff_id}
-          </div>
-
-          <div style="
-            margin-top:4px;
-            color:#666;
-          ">
-            Status:
-            ${user.is_active ? "Active" : "Disabled"}
-          </div>
-
+        <div style="margin-top:8px;color:#666;">
+          Staff ID: ${user.staff_id}
         </div>
-      `).join("");
+
+        <div style="margin-top:5px;">
+          Status:
+          <strong>
+            ${user.is_active ? "✅ Active" : "⛔ Disabled"}
+          </strong>
+        </div>
+
+      </div>
+    `).join("");
 
   } catch (error) {
 
     console.error(error);
 
     staffList.innerHTML =
-      '<div class="status">❌ Failed to load staff.</div>';
+      '<div class="status">❌ ' +
+      error.message +
+      '</div>';
 
   }
-
-  }
+}
 </script>
   
 <script>
