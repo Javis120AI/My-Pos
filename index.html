@@ -48,8 +48,16 @@
 
     .content {
       padding: 18px;
-      max-width: 900px;
+      max-width: 950px;
       margin: auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
     }
 
     .products {
@@ -72,11 +80,16 @@
       border-color: #111;
     }
 
-    .cart {
-      margin-top: 25px;
+    .cart,
+    .summary,
+    .order-card {
       background: white;
       padding: 18px;
       border-radius: 12px;
+    }
+
+    .cart {
+      margin-top: 25px;
     }
 
     .cart-item {
@@ -146,12 +159,57 @@
 
     .status {
       margin-top: 15px;
-      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .summary {
+      margin-bottom: 18px;
+    }
+
+    .summary-main {
+      font-size: 30px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      font-size: 18px;
+    }
+
+    .order-card {
+      margin-bottom: 12px;
+    }
+
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .order-items {
+      margin-top: 12px;
+      color: #555;
+      line-height: 1.7;
+    }
+
+    .order-payment {
+      margin-top: 12px;
       font-weight: bold;
     }
 
     .empty {
       color: #888;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #777;
     }
 
     @media (max-width: 700px) {
@@ -172,8 +230,12 @@
 <header>MY POS</header>
 
 <div class="tabs">
-  <button class="active">🍔 Order</button>
-  <button>📋 Today</button>
+  <button id="tab-order" class="active"
+    onclick="showPage('order')">🍔 Order</button>
+
+  <button id="tab-today"
+    onclick="showPage('today')">📋 Today</button>
+
   <button>💰 Expenses</button>
   <button>🧾 Closing</button>
   <button>📊 Report</button>
@@ -181,53 +243,83 @@
 
 <div class="content">
 
-  <h2>New Order</h2>
+  <!-- ORDER -->
+  <div id="page-order" class="page active">
 
-  <div class="products">
+    <h2>New Order</h2>
 
-    <div class="product" onclick="addItem('Chicken Burger', 5)">
-      Chicken Burger<br>
-      <strong>RM5.00</strong>
+    <div class="products">
+
+      <div class="product"
+        onclick="addItem('Chicken Burger', 5)">
+        Chicken Burger<br>
+        <strong>RM5.00</strong>
+      </div>
+
+      <div class="product"
+        onclick="addItem('Beef Burger', 6)">
+        Beef Burger<br>
+        <strong>RM6.00</strong>
+      </div>
+
+      <div class="product"
+        onclick="addItem('Lamb Burger', 7)">
+        Lamb Burger<br>
+        <strong>RM7.00</strong>
+      </div>
+
     </div>
 
-    <div class="product" onclick="addItem('Beef Burger', 6)">
-      Beef Burger<br>
-      <strong>RM6.00</strong>
-    </div>
+    <div class="cart">
 
-    <div class="product" onclick="addItem('Lamb Burger', 7)">
-      Lamb Burger<br>
-      <strong>RM7.00</strong>
+      <h2>Current Order</h2>
+
+      <div id="cartItems">
+        <div class="empty">No items yet</div>
+      </div>
+
+      <div class="total">
+        Total: RM<span id="total">0.00</span>
+      </div>
+
+      <div class="payment-methods">
+
+        <button onclick="selectPayment('Cash', this)">
+          💵 Cash
+        </button>
+
+        <button onclick="selectPayment('DuitNow QR', this)">
+          📱 DuitNow QR
+        </button>
+
+      </div>
+
+      <button id="confirmBtn"
+        class="pay"
+        onclick="confirmOrder()">
+        Confirm Order
+      </button>
+
+      <div id="status" class="status"></div>
+
     </div>
 
   </div>
 
-  <div class="cart">
 
-    <h2>Current Order</h2>
+  <!-- TODAY -->
+  <div id="page-today" class="page">
 
-    <div id="cartItems">
-      <div class="empty">No items yet</div>
+    <h2>Today's Sales</h2>
+
+    <div id="todayContent">
+      <div class="loading">Loading...</div>
     </div>
-
-    <div class="total">
-      Total: RM<span id="total">0.00</span>
-    </div>
-
-    <div class="payment-methods">
-      <button onclick="selectPayment('Cash', this)">💵 Cash</button>
-      <button onclick="selectPayment('DuitNow QR', this)">📱 DuitNow QR</button>
-    </div>
-
-    <button id="confirmBtn" class="pay" onclick="confirmOrder()">
-      Confirm Order
-    </button>
-
-    <div id="status" class="status"></div>
 
   </div>
 
 </div>
+
 
 <script>
 
@@ -240,20 +332,50 @@ const SUPABASE_KEY =
 let cart = {};
 let paymentMethod = "";
 
+
+/* TAB */
+
+function showPage(page) {
+
+  document.querySelectorAll(".page")
+    .forEach(p => p.classList.remove("active"));
+
+  document.querySelectorAll(".tabs button")
+    .forEach(b => b.classList.remove("active"));
+
+  document.getElementById("page-" + page)
+    .classList.add("active");
+
+  document.getElementById("tab-" + page)
+    .classList.add("active");
+
+  if (page === "today") {
+    loadToday();
+  }
+}
+
+
+/* ORDER */
+
 function addItem(name, price) {
 
   if (!cart[name]) {
+
     cart[name] = {
       name: name,
       price: price,
       qty: 1
     };
+
   } else {
+
     cart[name].qty++;
+
   }
 
   renderCart();
 }
+
 
 function changeQty(name, change) {
 
@@ -265,6 +387,7 @@ function changeQty(name, change) {
 
   renderCart();
 }
+
 
 function renderCart() {
 
@@ -303,8 +426,7 @@ function renderCart() {
 
         <div>
           <strong>${item.name}</strong><br>
-          RM${item.price.toFixed(2)}
-          × ${item.qty}
+          RM${item.price.toFixed(2)} × ${item.qty}
         </div>
 
         <div class="qty-controls">
@@ -333,18 +455,20 @@ function renderCart() {
     total.toFixed(2);
 }
 
+
 function selectPayment(method, button) {
 
   paymentMethod = method;
 
   document
     .querySelectorAll(".payment-methods button")
-    .forEach(btn => {
-      btn.classList.remove("selected");
-    });
+    .forEach(btn =>
+      btn.classList.remove("selected")
+    );
 
   button.classList.add("selected");
 }
+
 
 async function confirmOrder() {
 
@@ -368,10 +492,7 @@ async function confirmOrder() {
     document.getElementById("status");
 
   confirmBtn.disabled = true;
-  confirmBtn.innerText =
-    "Saving...";
-
-  status.innerText = "";
+  confirmBtn.innerText = "Saving...";
 
   try {
 
@@ -392,9 +513,9 @@ async function confirmOrder() {
           method: "POST",
 
           headers: {
-            "apikey": SUPABASE_KEY,
+            apikey: SUPABASE_KEY,
             "Content-Type": "application/json",
-            "Prefer": "return=representation"
+            Prefer: "return=representation"
           },
 
           body: JSON.stringify({
@@ -436,7 +557,7 @@ async function confirmOrder() {
           method: "POST",
 
           headers: {
-            "apikey": SUPABASE_KEY,
+            apikey: SUPABASE_KEY,
             "Content-Type":
               "application/json"
           },
@@ -453,9 +574,7 @@ async function confirmOrder() {
     }
 
     status.innerText =
-      "✅ Order Saved! " +
-      orderNo +
-      " | RM" +
+      "✅ Order Saved | RM" +
       total.toFixed(2);
 
     cart = {};
@@ -465,11 +584,9 @@ async function confirmOrder() {
       .querySelectorAll(
         ".payment-methods button"
       )
-      .forEach(btn => {
-        btn.classList.remove(
-          "selected"
-        );
-      });
+      .forEach(btn =>
+        btn.classList.remove("selected")
+      );
 
     renderCart();
 
@@ -477,24 +594,50 @@ async function confirmOrder() {
 
     console.error(error);
 
-    status.innerText =
-      "❌ Save failed. Please try again.";
-
     alert(
-      "Error saving order:\\n" +
+      "Save failed:\n" +
       error.message
     );
 
   } finally {
 
     confirmBtn.disabled = false;
-
     confirmBtn.innerText =
       "Confirm Order";
   }
 }
 
-</script>
 
-</body>
-</html>
+/* TODAY */
+
+async function loadToday() {
+
+  const container =
+    document.getElementById("todayContent");
+
+  container.innerHTML =
+    '<div class="loading">Loading...</div>';
+
+  try {
+
+    const now = new Date();
+
+    const start =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0, 0, 0
+      );
+
+    const end =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0, 0, 0
+      );
+
+    const ordersURL =
+      SUPABASE_URL +
+      "/rest
