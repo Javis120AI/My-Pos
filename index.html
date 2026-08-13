@@ -4345,6 +4345,21 @@ if (!ownerPin) {
   🔑 Reset PIN
 </button>
 
+<button
+  onclick="deleteStaff(${user.id}, '${user.name.replace(/'/g, "\\'")}')"
+  style="
+    margin-top:8px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+  "
+>
+  🗑️ Delete Staff
+</button>
+
       </div>
     `).join("");
 
@@ -4537,6 +4552,109 @@ if (!ownerPin) {
   }
 
   }
+  async function deleteStaff(staffUserId, staffName) {
+
+  if (!currentUser || currentUser.role !== "owner") {
+    alert("Owner only.");
+    return;
+  }
+
+  const firstConfirm = confirm(
+    "Delete staff account \"" +
+    staffName +
+    "\"?\n\nThis action cannot be undone."
+  );
+
+  if (!firstConfirm) return;
+
+
+  const ownerPin = prompt(
+    "Enter Owner PIN to confirm deletion:"
+  );
+
+  if (ownerPin === null) return;
+
+  if (!/^\d{4}$/.test(ownerPin)) {
+    alert("Owner PIN must be 4 digits.");
+    return;
+  }
+
+
+  const finalConfirm = confirm(
+    "⚠️ FINAL CONFIRMATION\n\n" +
+    "Permanently delete " +
+    staffName +
+    "?"
+  );
+
+  if (!finalConfirm) return;
+
+
+  try {
+
+    const response = await fetch(
+      SUPABASE_URL +
+      "/rest/v1/rpc/owner_delete_staff",
+      {
+        method: "POST",
+
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          p_owner_pin: ownerPin,
+          p_staff_user_id: staffUserId
+        })
+      }
+    );
+
+
+    if (!response.ok) {
+
+      const errorText = await response.text();
+
+      throw new Error(errorText);
+    }
+
+
+    alert(
+      "✅ " +
+      staffName +
+      " deleted successfully."
+    );
+
+    // Refresh Staff Accounts
+    loadStaff(ownerPin);
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    if (
+      error.message.includes(
+        "Owner verification failed"
+      )
+    ) {
+
+      alert("❌ Wrong Owner PIN.");
+
+    } else {
+
+      alert(
+        "❌ Delete Staff failed:\n" +
+        error.message
+      );
+
+    }
+
+  }
+
+}
+  
 </script>
   
 <script>
