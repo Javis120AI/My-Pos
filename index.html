@@ -412,77 +412,329 @@
 
 <body>
 <!-- LOGIN PAGE -->
-<div id="loginPage" style="
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#f58220;
-  padding:20px;
-">
 
-  <div style="
-    background:white;
-    width:100%;
-    max-width:380px;
-    padding:32px;
-    border-radius:18px;
-    box-shadow:0 10px 35px rgba(0,0,0,0.18);
-  ">
+<style>
+  #loginPage {
+    min-height: 100vh;
+    background: #fffaf5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    font-family: Arial, sans-serif;
+  }
 
-    <div style="
-      text-align:center;
-      font-size:36px;
-      font-weight:bold;
-      margin-bottom:5px;
-    ">
-      JTPOS
-    </div>
+  .jt-login-box {
+    width: 100%;
+    max-width: 920px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: white;
+    border-radius: 26px;
+    border: 2px solid #f58220;
+    overflow: hidden;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.10);
+  }
 
-    <div style="
-      text-align:center;
-      color:#777;
-      margin-bottom:28px;
-    ">
-      Sign in to continue
-    </div>
+  .jt-login-left {
+    padding: 45px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 
-    <div class="form-group">
-      <label>Staff ID</label>
+  .jt-brand {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .jt-brand img {
+    width: 86px;
+    height: 86px;
+    object-fit: contain;
+    margin-bottom: 10px;
+  }
+
+  .jt-brand-title {
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -2px;
+  }
+
+  .jt-brand-title .orange {
+    color: #f58220;
+  }
+
+  .jt-brand-title .black {
+    color: #111;
+  }
+
+  .jt-subtitle {
+    margin-top: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #555;
+  }
+
+  .jt-field-label {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 7px;
+    color: #222;
+  }
+
+  .jt-staff-input {
+    width: 100%;
+    padding: 16px 17px;
+    font-size: 18px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 20px;
+  }
+
+  .jt-staff-input:focus {
+    border-color: #f58220;
+  }
+
+  .jt-pin-box {
+    height: 58px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+  }
+
+  .jt-pin-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid #999;
+    background: transparent;
+  }
+
+  .jt-pin-dot.filled {
+    border-color: #f58220;
+    background: #f58220;
+  }
+
+  #loginStatus {
+    min-height: 24px;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 14px;
+  }
+
+  .jt-login-right {
+    background: #fff8f1;
+    padding: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .jt-keypad {
+    width: 100%;
+    max-width: 330px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .jt-key {
+    height: 72px;
+    border: 1px solid #e5e5e5;
+    background: white;
+    border-radius: 14px;
+    font-size: 26px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .jt-key:active {
+    transform: scale(0.96);
+  }
+
+  .jt-key-clear {
+    font-size: 22px;
+  }
+
+  .jt-key-login {
+    background: #f58220;
+    color: white;
+    border-color: #f58220;
+    font-size: 30px;
+  }
+
+  .jt-footer {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 13px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #888;
+    border-top: 1px solid #eee;
+  }
+
+  @media (max-width: 700px) {
+    #loginPage {
+      padding: 0;
+      background: white;
+      align-items: stretch;
+    }
+
+    .jt-login-box {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      display: block;
+      max-width: none;
+      min-height: 100vh;
+    }
+
+    .jt-login-left {
+      padding: 30px 25px 18px;
+    }
+
+    .jt-brand {
+      margin-bottom: 22px;
+    }
+
+    .jt-brand img {
+      width: 72px;
+      height: 72px;
+    }
+
+    .jt-brand-title {
+      font-size: 42px;
+    }
+
+    .jt-login-right {
+      background: white;
+      padding: 5px 25px 25px;
+    }
+
+    .jt-keypad {
+      max-width: none;
+    }
+
+    .jt-key {
+      height: 68px;
+    }
+
+    .jt-footer {
+      border-top: none;
+      padding-bottom: 20px;
+    }
+  }
+</style>
+
+
+<div id="loginPage">
+
+  <div class="jt-login-box">
+
+    <div class="jt-login-left">
+
+      <div class="jt-brand">
+
+        <img
+          src="/jtpos-icon.png"
+          alt="JTPOS"
+        >
+
+        <div class="jt-brand-title">
+          <span class="orange">JT</span><span class="black">POS</span>
+        </div>
+
+        <div class="jt-subtitle">
+          POINT OF SALE SYSTEM
+        </div>
+
+      </div>
+
+
+      <div class="jt-field-label">
+        STAFF ID
+      </div>
 
       <input
         id="loginStaffId"
+        class="jt-staff-input"
         type="text"
-        placeholder="Staff ID"
+        placeholder="Enter Staff ID"
         autocomplete="username"
       >
-    </div>
 
-    <div class="form-group">
-      <label>4 Digit PIN</label>
+
+      <div class="jt-field-label">
+        PIN (4 DIGIT)
+      </div>
+
+      <div class="jt-pin-box">
+        <span id="pinDot1" class="jt-pin-dot"></span>
+        <span id="pinDot2" class="jt-pin-dot"></span>
+        <span id="pinDot3" class="jt-pin-dot"></span>
+        <span id="pinDot4" class="jt-pin-dot"></span>
+      </div>
+
 
       <input
         id="loginPin"
-        type="password"
-        inputmode="numeric"
-        maxlength="4"
-        pattern="[0-9]*"
-        placeholder="••••"
-        autocomplete="current-password"
+        type="hidden"
+        value=""
       >
+
+
+      <div
+        id="loginStatus"
+        class="status">
+      </div>
+
     </div>
 
-    <button
-      id="loginBtn"
-      class="save-btn"
-      onclick="loginUser()">
-      Login
-    </button>
 
-    <div
-      id="loginStatus"
-      class="status"
-      style="text-align:center;">
+    <div class="jt-login-right">
+
+      <div class="jt-keypad">
+
+        <button class="jt-key" onclick="enterLoginPin('1')">1</button>
+        <button class="jt-key" onclick="enterLoginPin('2')">2</button>
+        <button class="jt-key" onclick="enterLoginPin('3')">3</button>
+
+        <button class="jt-key" onclick="enterLoginPin('4')">4</button>
+        <button class="jt-key" onclick="enterLoginPin('5')">5</button>
+        <button class="jt-key" onclick="enterLoginPin('6')">6</button>
+
+        <button class="jt-key" onclick="enterLoginPin('7')">7</button>
+        <button class="jt-key" onclick="enterLoginPin('8')">8</button>
+        <button class="jt-key" onclick="enterLoginPin('9')">9</button>
+
+        <button
+          class="jt-key jt-key-clear"
+          onclick="deleteLoginPin()">
+          ⌫
+        </button>
+
+        <button class="jt-key" onclick="enterLoginPin('0')">0</button>
+
+        <button
+          id="loginBtn"
+          class="jt-key jt-key-login"
+          onclick="loginUser()">
+          ✓
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="jt-footer">
+      ● SIMPLE &nbsp;&nbsp; ● SECURE &nbsp;&nbsp; ● RELIABLE
     </div>
 
   </div>
@@ -3750,8 +4002,40 @@ function filterProducts(category, button) {
   }
   let currentUser = null;
 
-async function loginUser() {
+function updateLoginPinDots() {
+  const pin = document.getElementById("loginPin").value;
 
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById("pinDot" + i);
+
+    if (!dot) continue;
+
+    if (i <= pin.length) {
+      dot.classList.add("filled");
+    } else {
+      dot.classList.remove("filled");
+    }
+  }
+}
+
+function enterLoginPin(number) {
+  const input = document.getElementById("loginPin");
+
+  if (input.value.length >= 4) return;
+
+  input.value += number;
+  updateLoginPinDots();
+}
+
+function deleteLoginPin() {
+  const input = document.getElementById("loginPin");
+
+  input.value = input.value.slice(0, -1);
+  updateLoginPinDots();
+}
+
+
+async function loginUser() {
   const staffId =
     document.getElementById("loginStaffId")
       .value
