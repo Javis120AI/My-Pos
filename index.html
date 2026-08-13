@@ -4330,6 +4330,20 @@ if (!ownerPin) {
 >
   ${user.is_active ? "Disable Staff" : "Enable Staff"}
 </button>
+<button
+  onclick="resetStaffPin(${user.id}, '${user.name.replace(/'/g, "\\'")}')"
+  style="
+    margin-top:8px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+  "
+>
+  🔑 Reset PIN
+</button>
 
       </div>
     `).join("");
@@ -4402,6 +4416,126 @@ if (!ownerPin) {
     console.error(error);
     alert("❌ " + error.message);
   }
+  }
+  async function resetStaffPin(staffUserId, staffName) {
+
+  if (!currentUser || currentUser.role !== "owner") {
+    alert("Owner only.");
+    return;
+  }
+
+  const ownerPin =
+    prompt("Enter Owner PIN:");
+
+  if (ownerPin === null) return;
+
+  if (!/^\d{4}$/.test(ownerPin)) {
+    alert("Owner PIN must be 4 digits.");
+    return;
+  }
+
+
+  const newPin =
+    prompt(
+      "Enter NEW 4 Digit PIN for " +
+      staffName + ":"
+    );
+
+  if (newPin === null) return;
+
+  if (!/^\d{4}$/.test(newPin)) {
+    alert("New PIN must be exactly 4 digits.");
+    return;
+  }
+
+
+  const confirmPin =
+    prompt("Confirm NEW PIN:");
+
+  if (confirmPin === null) return;
+
+  if (newPin !== confirmPin) {
+    alert("PIN does not match.");
+    return;
+  }
+
+
+  if (
+    !confirm(
+      "Reset PIN for " +
+      staffName +
+      "?"
+    )
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/rpc/owner_reset_staff_pin",
+        {
+          method: "POST",
+
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization:
+              "Bearer " + SUPABASE_KEY,
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            p_owner_pin: ownerPin,
+            p_staff_user_id: staffUserId,
+            p_new_pin: newPin
+          })
+        }
+      );
+
+
+    if (!response.ok) {
+
+      const errorText =
+        await response.text();
+
+      throw new Error(errorText);
+
+    }
+
+
+    alert(
+      "✅ PIN reset successfully for " +
+      staffName
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    if (
+      error.message.includes(
+        "Owner verification failed"
+      )
+    ) {
+
+      alert("❌ Wrong Owner PIN.");
+
+    } else {
+
+      alert(
+        "❌ Reset PIN failed:\n" +
+        error.message
+      );
+
+    }
+
+  }
+
   }
 </script>
   
