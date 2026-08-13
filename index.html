@@ -544,30 +544,48 @@
     gap: 12px;
   }
 
-  .jt-key {
-    height: 72px;
-    border: 1px solid #e5e5e5;
-    background: white;
-    border-radius: 14px;
-    font-size: 26px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
+.jt-key {
+  width: 72px;
+  height: 72px;
+  justify-self: center;
+  border: 1px solid #e5e5e5;
+  background: white;
+  border-radius: 50%;
+  font-size: 26px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
   .jt-key:active {
-    transform: scale(0.96);
-  }
+  background: #f58220;
+  color: white;
+  border-color: #f58220;
+  transform: scale(0.92);
+}
 
+.jt-key:focus {
+  outline: none;
+}
+
+.jt-key:focus-visible {
+  outline: none;
+}
   .jt-key-clear {
     font-size: 22px;
   }
 
   .jt-key-login {
-    background: #f58220;
-    color: white;
-    border-color: #f58220;
-    font-size: 30px;
-  }
+  background: #f58220;
+  color: white;
+  border-color: #f58220;
+  font-size: 30px;
+}
+
+.jt-key-login:active {
+  background: #df6d10;
+  color: white;
+}
 
   .jt-footer {
     grid-column: 1 / -1;
@@ -621,9 +639,30 @@
       max-width: none;
     }
 
-    .jt-key {
-      height: 68px;
-    }
+.jt-key {
+  width: 72px;
+  height: 72px;
+  justify-self: center;
+
+  border: 1px solid #eeeeee;
+  background: white;
+
+  border-radius: 50%;
+
+  font-size: 26px;
+  font-weight: 600;
+  color: #111;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    transform 0.08s ease;
+}
 
     .jt-footer {
       border-top: none;
